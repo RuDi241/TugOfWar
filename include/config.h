@@ -1,15 +1,15 @@
 #ifndef CONFIG_H
 #define CONFIG_H
-#include "../include/pair_float_float.h"
+#include "../include/pair_double_double.h"
 #include "../include/pair_int_int.h"
 #include <stdio.h>
 #include <time.h>
 
 typedef struct Config {
   int players_per_team;
-  PairFloatFloat initial_energy_range;
-  PairFloatFloat energy_decay_range;
-  float fall_probability;
+  PairDoubleDouble initial_energy_range;
+  PairDoubleDouble energy_decay_range;
+  double fall_probability;
   time_t end_time;
 } Config;
 

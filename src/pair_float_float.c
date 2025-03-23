@@ -1,7 +1,7 @@
-#include "../include/pair_float_float.h"
+#include "../include/pair_double_double.h"
 
-PairFloatFloat make_pair_float_float(float first, float second) {
-  PairFloatFloat pair;
+PairDoubleDouble make_pair_double_double(double first, double second) {
+  PairDoubleDouble pair;
   pair.first = first;
   pair.second = second;
   return pair;
