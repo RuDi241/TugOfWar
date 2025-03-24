@@ -4,6 +4,4 @@ typedef struct PairIntInt {
   int first;
   int second;
 } PairIntInt;
-
-PairIntInt make_pair_int_int(int first, int second);
 #endif

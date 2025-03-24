@@ -1,3 +1,9 @@
-config.txt
+# Configurations
+game_config.txt
+team1_config.txt
+team2_config.txt
+# Build directories and cache
 bin/
 build/
+compile_commands.json
+.cache/
