@@ -20,6 +20,7 @@ int parse_game_config(char *buf, GameConfig *game_config) {
       return CONFIG_ERROR;
     return 0;
   }
+  fprintf(stderr, "Invalid line in config file\n");
   return CONFIG_ERROR;
 }
 const GameConfig DEFAULT_CONFIG = {

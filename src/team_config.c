@@ -28,7 +28,7 @@ int parse_team_config(char *buf, TeamConfig *team_config) {
     return 0;
 
   // Parse number of players
-  if (sscanf(buf, "num_players = %d", &team_config->num_players) == 1) {
+  if (sscanf(buf, " num_players = %d", &team_config->num_players) == 1) {
     if (team_config->num_players <= 0) {
       fprintf(stderr, "Invalid number of players\n");
       return CONFIG_ERROR;
@@ -37,7 +37,7 @@ int parse_team_config(char *buf, TeamConfig *team_config) {
   }
 
   // Parse energy level range
-  if (sscanf(buf, "initial_energy_range = %d %d",
+  if (sscanf(buf, " initial_energy_range = %d %d",
              &team_config->initial_energy_range.first,
              &team_config->initial_energy_range.second) == 2) {
     if (validate_positive_range(team_config->initial_energy_range)) {
@@ -49,7 +49,7 @@ int parse_team_config(char *buf, TeamConfig *team_config) {
   }
 
   // Parse energy decay range
-  if (sscanf(buf, "energy_decay_range = %d %d",
+  if (sscanf(buf, " energy_decay_range = %d %d",
              &team_config->energy_decay_range.first,
              &team_config->energy_decay_range.second) == 2) {
     if (validate_positive_range(team_config->energy_decay_range)) {
@@ -61,7 +61,7 @@ int parse_team_config(char *buf, TeamConfig *team_config) {
   }
 
   // Parse fall probability
-  if (sscanf(buf, "fall_probability = %lf", &team_config->fall_probability) ==
+  if (sscanf(buf, " fall_probability = %lf", &team_config->fall_probability) ==
       1) {
     if (team_config->fall_probability < 0 ||
         team_config->fall_probability > 1) {
@@ -71,7 +71,7 @@ int parse_team_config(char *buf, TeamConfig *team_config) {
     }
     return 0;
   }
-  if (sscanf(buf, "fall_time_range = %d %d",
+  if (sscanf(buf, " fall_time_range = %d %d",
              &team_config->fall_time_range.first,
              &team_config->fall_time_range.second) == 2) {
     if (validate_positive_range(team_config->fall_time_range)) {
