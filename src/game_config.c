@@ -16,8 +16,10 @@ int parse_game_config(char *buf, GameConfig *game_config) {
 
   if (sscanf(buf, " max_simulation_time = %ld",
              &game_config->max_simulation_time) == 1) {
-    if (game_config->max_simulation_time <= 0)
+    if (game_config->max_simulation_time <= 0) {
+      fprintf(stderr, "max_simulation_time must be positive.");
       return CONFIG_ERROR;
+    }
     return 0;
   }
   fprintf(stderr, "Invalid line in config file\n");
