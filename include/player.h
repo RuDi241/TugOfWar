@@ -12,4 +12,6 @@ typedef struct Player {
 
 int serialize_player(Player *player, StringBuf *string_buf);
 int deserialize_player(Player *player, StringBuf *string_buf);
+
+
 #endif
