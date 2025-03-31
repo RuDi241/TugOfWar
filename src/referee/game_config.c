@@ -1,7 +1,5 @@
-#include "../include/game_config.h"
-#include "../include/error_codes.h"
-#include <stdio.h>
-#include <string.h>
+#include "../../include/game_config.h"
+
 
 #define CONFIG_LINE_SIZE 256
 
@@ -26,7 +24,10 @@ int parse_game_config(char *buf, GameConfig *game_config) {
   return CONFIG_ERROR;
 }
 const GameConfig DEFAULT_CONFIG = {
-    .max_simulation_time = 100,
+    .max_simulation_time = 1000,
+    .max_consecutive_wins = 4,
+    .round_threshold_score = 500,
+    .max_round_time = 100,
 };
 int fprintf_game_config(FILE *stream, const GameConfig *game_config) {
   if (stream == NULL)

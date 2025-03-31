@@ -3,6 +3,9 @@
 #include "../include/player.h"
 #include "../include/string_buf.h"
 #include "../include/team_config.h"
+#include <signal.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 typedef struct Team {
   int size;
@@ -17,10 +20,10 @@ typedef struct PlayerEnergyIndexed {
 } PlayerEnergyIndexed;
 
 int make_team(Team *team, TeamConfig *team_config);
-int create_team_processes(  pid_t *team_pid, int (*to_team_fd)[2], int (*to_referee_team_fd)[2], TeamConfig *team_config);
+int create_team_processes(  pid_t *team_pid, int (*to_team_fd)[2], int (*to_referee_team_fd)[2], TeamConfig team_config, Team *team);
 
-int receive_data_from_team(pid_t *team_pid, int (*to_referee_team_fd)[2], Team *team);
-int send_position_to_team( pid_t *team_pid, int (*to_team_fd)[2], Team *team);
+int receive_data_from_team( Team *team, int (*to_referee_team_fd)[2]);
+int send_position_to_team( int (*to_team_fd)[2], Team *team);
 
 int destroy_team(Team *team);
 int serialize_team(Team *team, StringBuf *string_buf);

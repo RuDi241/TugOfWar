@@ -1,10 +1,16 @@
 #ifndef GAME_CONFIG_H
 #define GAME_CONFIG_H
+#include "error_codes.h"
+#include <stdio.h>
+#include <string.h>
 #include <stdio.h>
 #include <time.h>
 
 typedef struct GameConfig {
   time_t max_simulation_time;
+  int max_consecutive_wins;
+  int round_threshold_score;
+  int max_round_time;
 } GameConfig;
 
 int read_game_config(const char *filename, GameConfig *game_config);

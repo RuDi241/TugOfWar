@@ -6,17 +6,21 @@
 #include "pair_int_int.h"
 #include "string_buf.h"
 #include <sys/time.h>
+#include <stdlib.h>
+#define SEED 42
 
 //ALL IN milliseconds
 typedef struct GameState {
   char in_round;
-  time_t round_start_time;
-  time_t simulation_time;
-  time_t round_period;
+  int round_winner;
+  int round_loser;
+  int simulation_time;
   int number_of_rounds;
   int round_score;
+  int round_time;
+  int max_consecutive_wins;
+  int round_threshold_score;
   PairIntInt simulation_score;
-  time_t simulation_start_time; 
   Team team1;
   Team team2;
 } GameState;
