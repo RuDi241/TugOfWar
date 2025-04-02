@@ -10,15 +10,26 @@
 //ALL IN milliseconds
 typedef struct GameState {
   char in_round;
-  time_t round_start_time;
-  time_t simulation_time;
-  time_t round_period;
-  int number_of_rounds;
+  
+  struct timeval start_round_time;
+  time_t current_round_time;
+
+  struct timeval start_simulation_time;
+  time_t current_simulation_time; 
+  time_t max_simulation_time;
+
+  int number_of_rounds_played;
+  int max_number_of_rounds;
+
   int round_score;
   PairIntInt simulation_score;
-  time_t simulation_start_time; 
+
   Team team1;
   Team team2;
+
+  int team1_sum;
+  int team2_sum;
+
 } GameState;
 
 int init_game_state(GameState *game_state, GameConfig *game_config,

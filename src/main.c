@@ -8,7 +8,7 @@
 #include <signal.h>
 
 int main(int argc, char *argv[]) {
-  struct timeval start_simulation, start_round, now;
+  struct timeval now, start_simulation;
 
   GameConfig game_config;
   GameState game_state;
@@ -41,14 +41,11 @@ int main(int argc, char *argv[]) {
   //8- if a team won two consecutive games ==> end game ==> that team won!
   //9- 
   
-  gettimeofday(&start_simulation, NULL); 
-  long elapsed_ms_from_sim_time;
-  while (1) {
-      elapsed_ms_from_sim_time = (now.tv_sec - start_simulation.tv_sec);
-                    
-      if (elapsed_ms_from_sim_time >= game_state.simulation_time) {
-          break; 
-      }
+  gettimeofday(&game_state.start_simulation_time, NULL); 
+
+  while (game_state.current_simulation_time <= game_state.max_simulation_time || game_state.number_of_rounds_played < game_state.max_number_of_rounds) {
+
+      game_state.current_simulation_time = (now.tv_usec - game_state.start_simulation_time.tv_usec) / 1000;
       
       //read energies from players
       receive_data_from_team(&team1);
@@ -60,19 +57,13 @@ int main(int argc, char *argv[]) {
       send_position_to_team(&team1);
       send_position_to_team(&team2);
 
-      int round_sum = 0;
-
-      gettimeofday(&start_round, NULL); 
-      long elapsed_ms_from_round_time;
+      gettimeofday(&game_state.start_round_time, NULL); 
       
-      while(1){
+      while(game_state.current_round_time <= game_state.max_simulation_time){
           //checks for round time
-          elapsed_ms_from_round_time = (now.tv_sec - start_round.tv_sec) * 1000; // Seconds to ms
-          if (elapsed_ms_from_round_time >= game_state.round_period) {
-              break; 
-          }
+          game_state.current_round_time = (now.tv_usec - game_state.start_round_time.tv_usec) / 1000; // Seconds to ms
           
-          if(elapsed_ms_from_round_time%1000 == 0){
+          if(game_state.current_round_time % 1000 == 0){
               for(int i = 0; i< team1.size; i++){
                 kill(game_state.team1.players[i].pid, SIGUSR2);
               }
@@ -84,16 +75,13 @@ int main(int argc, char *argv[]) {
               receive_data_from_team(&team1);
               receive_data_from_team(&team2);
 
-              int sum_t1 = 0;
-              int sum_t2 = 0;
-
               for(int i = 0; i < team1.size; i++)
-                  sum_t1 += team1.players[i].energy;
+                  game_state.team1_sum += team1.players[i].energy;
 
               for(int i = 0; i < team2.size; i++)
-                  sum_t2 += team2.players[i].energy;
+                  game_state.team2_sum += team2.players[i].energy;
 
-              round_sum += (sum_t1 - sum_t2);
+              game_state.round_score += (game_state.team1_sum - game_state.team2_sum);
 
               /**
                * TODO: 1- IMPLEMENT WINNING LOGIC
