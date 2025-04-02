@@ -3,7 +3,6 @@
 #include "../include/team_config.h"
 #include "../include/team.h"
 #include "../include/game_state.h"
-#include "../include/ipc.h"
 #include "../include/player.h"
 #include <sys/time.h>
 #include <signal.h>
@@ -18,14 +17,6 @@ int main(int argc, char *argv[]) {
   Team team1;
   Team team2;  
 
-  pid_t *t1_pid;
-  int (*to_t1_fd)[2];
-  int (*to_referee_t1_fd)[2];
-
-  pid_t *t2_pid;
-  int (*to_t2_fd)[2];
-  int (*to_referee_t2_fd)[2];
-
   if (read_game_config("./game_config.txt", &game_config))
     return CONFIG_ERROR;
   if (read_team_config("./team1_config.txt", &team1_config))
@@ -36,22 +27,8 @@ int main(int argc, char *argv[]) {
   fprintf_team_config(stdout, &team1_config);
   fprintf_team_config(stdout, &team2_config);
 
-  //create team1,2
-  make_team(&team1, &team1_config);  
-  make_team(&team2, &team2_config);  
-
   //init game state
-  init_game_state(&game_state, &game_config, &team1, &team2);
-
-  init_interprocess_communication(t1_pid, to_t1_fd, to_referee_t1_fd, t2_pid, to_t2_fd, to_referee_t2_fd, &team1, &team2);
-
-  create_pipes(to_t1_fd, to_referee_t1_fd, to_t2_fd, to_referee_t2_fd, &team1, &team2);
-
-  //create team1's processes
-  create_team_processes(t1_pid, to_t1_fd, to_referee_t1_fd, &team1_config);
-
-  //create team2's processes
-  create_team_processes(t2_pid, to_t2_fd, to_referee_t2_fd, &team2_config);
+  init_game_state(&game_state, &game_config, &team1_config, &team2_config);
 
 
   //1- while curr_simulation time less than total_sim_time
@@ -74,14 +51,14 @@ int main(int argc, char *argv[]) {
       }
       
       //read energies from players
-      receive_data_from_team(t1_pid, to_referee_t1_fd, &team1);
-      arrange_team(&team1);
+      receive_data_from_team(&team1);
+      receive_data_from_team(&team2);
 
-      receive_data_from_team(t2_pid, to_referee_t2_fd, &team2);
+      arrange_team(&team1);
       arrange_team(&team2);
 
-      send_position_to_team(t1_pid, to_t1_fd, &team1);
-      send_position_to_team(t2_pid, to_t2_fd, &team2);
+      send_position_to_team(&team1);
+      send_position_to_team(&team2);
 
       int round_sum = 0;
 
@@ -97,15 +74,15 @@ int main(int argc, char *argv[]) {
           
           if(elapsed_ms_from_round_time%1000 == 0){
               for(int i = 0; i< team1.size; i++){
-                kill(t1_pid[i], SIGUSR2);
+                kill(game_state.team1.players[i].pid, SIGUSR2);
               }
 
               for(int i = 0; i< team2.size; i++){
-                kill(t2_pid[i], SIGUSR2);
+                kill(game_state.team2.players[i].pid, SIGUSR2);
               }
 
-              receive_data_from_team(t1_pid, to_referee_t1_fd, &team1);
-              receive_data_from_team(t2_pid, to_referee_t2_fd, &team2);
+              receive_data_from_team(&team1);
+              receive_data_from_team(&team2);
 
               int sum_t1 = 0;
               int sum_t2 = 0;

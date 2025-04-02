@@ -22,8 +22,7 @@ typedef struct GameState {
 } GameState;
 
 int init_game_state(GameState *game_state, GameConfig *game_config,
-                    //TeamConfig *team1_config, TeamConfig *team2_config
-                    Team *team1, Team *team2);
+                    TeamConfig *team1_config, TeamConfig *team2_config);
 int serialize_game_state(GameState *game_state, StringBuf *string_buf);
 int deserialize_game_state(GameState *game_state, StringBuf *string_buf);
 #endif

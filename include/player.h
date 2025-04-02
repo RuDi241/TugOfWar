@@ -8,6 +8,8 @@ typedef struct Player {
   int position;
   int energy;
   int fall_timeout;
+  int to_player_fd[2];
+  int to_referee_fd[2];
 } Player;
 
 int serialize_player(Player *player, StringBuf *string_buf);
