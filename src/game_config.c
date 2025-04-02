@@ -22,17 +22,45 @@ int parse_game_config(char *buf, GameConfig *game_config) {
     }
     return 0;
   }
+
+
+  if (sscanf(buf, " max_number_of_rounds = %ld",
+            &game_config->max_number_of_rounds) == 1) {
+    if (game_config->max_number_of_rounds <= 0) {
+      fprintf(stderr, "max_number_of_rounds must be positive.\n");
+      return CONFIG_ERROR;
+    }
+    return 0;
+  }
+
+  if (sscanf(buf, " score_gap_to_win = %ld",
+            &game_config->score_gap_to_win) == 1) {
+    if (game_config->score_gap_to_win <= 0) {
+      fprintf(stderr, "score_gap_to_win must be positive.\n");
+      return CONFIG_ERROR;
+    }
+    return 0;
+  }
+
   fprintf(stderr, "Invalid line in config file\n");
   return CONFIG_ERROR;
 }
+
 const GameConfig DEFAULT_CONFIG = {
     .max_simulation_time = 100,
+    .max_number_of_rounds = 5,
+    .score_gap_to_win = 10
 };
+
 int fprintf_game_config(FILE *stream, const GameConfig *game_config) {
   if (stream == NULL)
     return IO_ERROR;
   fprintf(stream, "max_simulation_time = %ld\n",
           game_config->max_simulation_time);
+  fprintf(stream, "max_number_of_rounds = %ld\n",
+          game_config->max_number_of_rounds);
+  fprintf(stream, "score_gap_to_win = %ld\n",
+          game_config->score_gap_to_win);
   fflush(stream);
   return 0;
 }

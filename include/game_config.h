@@ -5,6 +5,8 @@
 
 typedef struct GameConfig {
   time_t max_simulation_time;
+  int max_number_of_rounds;
+  int score_gap_to_win;
 } GameConfig;
 
 int read_game_config(const char *filename, GameConfig *game_config);
