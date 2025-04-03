@@ -34,9 +34,10 @@ int main(int argc, char *argv[]) {
     return TIMER_ERROR;
   } 
 
-  while (game_state.current_simulation_time <= game_state.max_simulation_time || 
-    game_state.number_of_rounds_played < game_state.max_number_of_rounds ||
-    game_state.current_win_streak >= game_state.max_consecutive_wins) {
+  //SIMULATION LOOOOOPPP
+  while (game_state.current_simulation_time <= game_state.max_simulation_time && 
+    game_state.number_of_rounds_played < game_state.max_number_of_rounds &&
+    game_state.current_win_streak < game_state.max_consecutive_wins) {
 
       if (gettimeofday(&now, NULL) == -1) {
         perror("gettimeofday failed");
@@ -61,6 +62,8 @@ int main(int argc, char *argv[]) {
       } 
       
       game_state.in_round = '1';
+
+      //ROUND LOOOPPPPP
       while(game_state.current_round_time <= game_state.max_simulation_time){
 
           if (gettimeofday(&now, NULL) == -1) {
@@ -69,7 +72,8 @@ int main(int argc, char *argv[]) {
           }
           //checks for round time
           game_state.current_round_time = (now.tv_sec - game_state.start_round_time.tv_sec) * 1000 + (now.tv_usec - game_state.start_round_time.tv_usec) / 1000; // Seconds to ms
-          
+      
+          //TODO: Revise timing issues (TAKE DIFFERENCE BETWEEN READINGS)
           if(game_state.current_round_time % 1000 == 0){
               for(int i = 0; i< game_state.team1.size; i++){
                 kill(game_state.team1.players[i].pid, SIGUSR2);

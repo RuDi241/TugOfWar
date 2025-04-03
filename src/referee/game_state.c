@@ -40,9 +40,6 @@ int decide_round_winner(GameState *game_state){
         announce_result_to_team(&game_state->team1, 0);
         announce_result_to_team(&game_state->team2, 1);
     }else{
-        //Draw case-TODO: DISCUSS THE FLAG FOR DRAW STATE 
-        game_state->simulation_score.first++;
-        game_state->simulation_score.second++;
         announce_result_to_team(&game_state->team1, 2);
         announce_result_to_team(&game_state->team2, 2);
     }
