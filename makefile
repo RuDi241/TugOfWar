@@ -1,55 +1,93 @@
+# Makefile for multi-target C project
+
+# Compiler and linker settings
+CC := gcc
+LD := gcc
+
+# Build mode (debug or release)
+# Usage: make BUILD=release
+BUILD ?= debug
+
+# Define the programs
+PROGRAMS := referee player graphics
+
+# Program-specific linker flags
+REFEREE_LDFLAGS :=
+PLAYER_LDFLAGS :=
+GRAPHICS_LDFLAGS := -lglfw -lGL
+
 # Directories
-SRC_DIR   := src
-BUILD_DIR := build
-BIN_DIR   := bin
+SRC_DIR := src
+INCLUDE_DIR := include
+BUILD_ROOT := build
+BIN_DIR := bin
+BUILD_DIR := $(BUILD_ROOT)/$(BUILD)
 
-# Build modes
-DEBUG_DIR  := $(BUILD_DIR)/debug
-RELEASE_DIR := $(BUILD_DIR)/release
+# Common compiler flags
+COMMON_CFLAGS := -Wall -Wextra -I$(INCLUDE_DIR)
 
-# Default build mode
-BUILD_MODE ?= debug
-
-# Compiler flags
-DEBUG_FLAGS  := -g -O0 -MMD
-RELEASE_FLAGS := -O2 -DNDEBUG -MMD
-
-ifeq ($(BUILD_MODE), debug)
-    OBJ_DIR := $(DEBUG_DIR)
-    GCC_FLAGS := $(DEBUG_FLAGS)
-    EXE := $(BIN_DIR)/main_debug
+# Debug and release specific flags
+ifeq ($(BUILD),debug)
+    CFLAGS := $(COMMON_CFLAGS) -g -O0 -MMD
 else
-    OBJ_DIR := $(RELEASE_DIR)
-    GCC_FLAGS := $(RELEASE_FLAGS)
-    EXE := $(BIN_DIR)/main_release
+    CFLAGS := $(COMMON_CFLAGS) -O2 -DNDEBUG -MMD
 endif
 
-# Source and object files
-SRCS := $(shell find $(SRC_DIR) -name '*.c')
-OBJS := $(subst $(SRC_DIR), $(OBJ_DIR), $(SRCS:.c=.o))
+# Rule to make all programs
+.PHONY: all
+all: $(PROGRAMS)
 
-# Default target
-all: $(EXE)
+# Function to get source files for a program
+get_sources = $(wildcard $(SRC_DIR)/$(1)/*.c)
 
-# Linking
-$(EXE): $(OBJS) | $(BIN_DIR)
-	@echo "------ Linking $(EXE) ------"
-	rm -f $(EXE)
-	gcc $(GCC_FLAGS) -o $(EXE) $(OBJS)
+# Function to transform source files to object files
+src_to_obj = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(1))
 
-# Compilation
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	@echo "------ Compiling $(@) ------"
-	rm -f $@
-	gcc $(GCC_FLAGS) -c -o $@ $<
+# Define program-specific LDFLAGS
+referee_ldflags = $(REFEREE_LDFLAGS)
+player_ldflags = $(PLAYER_LDFLAGS)
+graphics_ldflags = $(GRAPHICS_LDFLAGS)
 
-# Create necessary directories
-$(OBJ_DIR) $(BIN_DIR):
-	mkdir -p $@
+# Generic rule to build each program
+define build_program
+$(1): $$(call src_to_obj,$$(call get_sources,$(1)))
+	@mkdir -p $$(BIN_DIR)
+	$$(LD) $$^ -o $$(BIN_DIR)/$$@ $$($(1)_ldflags)
+endef
 
-# Include dependency files
--include $(OBJ_DIR)/*.d
+# Apply the build_program rule to each program
+$(foreach prog,$(PROGRAMS),$(eval $(call build_program,$(prog))))
 
-# Clean
+# Rule to compile C sources to object files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean rule
+.PHONY: clean
 clean:
-	rm -rf $(BUILD_DIR) $(BIN_DIR)
+	rm -rf $(BUILD_ROOT)
+	rm -rf $(BIN_DIR)
+
+# Include all dependency files
+-include $(shell find $(BUILD_DIR) -name "*.d" 2>/dev/null)
+
+# Help rule
+.PHONY: help
+help:
+	@echo "Usage: make [target] [BUILD=mode]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all        Build all programs (default)"
+	@echo "  referee    Build the referee program"
+	@echo "  player     Build the player program"
+	@echo "  graphics   Build the graphics program (links with -lglfw -lGL)"
+	@echo "  clean      Remove all build files"
+	@echo "  help       Display this help message"
+	@echo ""
+	@echo "Build Modes:"
+	@echo "  debug      Debug build with no optimization (default)"
+	@echo "  release    Release build with optimization"
+	@echo ""
+	@echo "Example:"
+	@echo "  make all BUILD=release    # Build all programs in release mode"
