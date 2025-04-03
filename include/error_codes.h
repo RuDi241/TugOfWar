@@ -5,4 +5,5 @@
 #define IO_ERROR 2
 #define PIPE_ERROR 3
 #define WRITE_PIPE_ERROR 4
+#define TIMER_ERROR 5
 #endif

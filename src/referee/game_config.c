@@ -24,7 +24,7 @@ int parse_game_config(char *buf, GameConfig *game_config) {
   }
 
 
-  if (sscanf(buf, " max_number_of_rounds = %ld",
+  if (sscanf(buf, " max_number_of_rounds = %d",
             &game_config->max_number_of_rounds) == 1) {
     if (game_config->max_number_of_rounds <= 0) {
       fprintf(stderr, "max_number_of_rounds must be positive.\n");
@@ -33,7 +33,7 @@ int parse_game_config(char *buf, GameConfig *game_config) {
     return 0;
   }
 
-  if (sscanf(buf, " score_gap_to_win = %ld",
+  if (sscanf(buf, " score_gap_to_win = %d",
             &game_config->score_gap_to_win) == 1) {
     if (game_config->score_gap_to_win <= 0) {
       fprintf(stderr, "score_gap_to_win must be positive.\n");
@@ -42,7 +42,7 @@ int parse_game_config(char *buf, GameConfig *game_config) {
     return 0;
   }
 
-  if (sscanf(buf, " max_consecutive_wins = %ld",
+  if (sscanf(buf, " max_consecutive_wins = %d",
             &game_config->max_consecutive_wins) == 1) {
     if (game_config->max_consecutive_wins <= 0) {
       fprintf(stderr, "max_consecutive_wins must be positive.\n");
@@ -67,11 +67,11 @@ int fprintf_game_config(FILE *stream, const GameConfig *game_config) {
     return IO_ERROR;
   fprintf(stream, "max_simulation_time = %ld\n",
           game_config->max_simulation_time);
-  fprintf(stream, "max_number_of_rounds = %ld\n",
+  fprintf(stream, "max_number_of_rounds = %d\n",
           game_config->max_number_of_rounds);
-  fprintf(stream, "score_gap_to_win = %ld\n",
+  fprintf(stream, "score_gap_to_win = %d\n",
           game_config->score_gap_to_win);
-  fprintf(stream, "max_consecutive_wins = %ld\n",
+  fprintf(stream, "max_consecutive_wins = %d\n",
           game_config->max_consecutive_wins);
   fflush(stream);
   return 0;

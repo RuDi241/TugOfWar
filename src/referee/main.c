@@ -8,7 +8,7 @@
 #include <signal.h>
 
 int main(int argc, char *argv[]) {
-  struct timeval now, start_simulation;
+  struct timeval now;
 
   GameConfig game_config;
   GameState game_state;
@@ -41,11 +41,19 @@ int main(int argc, char *argv[]) {
   //8- if a team won two consecutive games ==> end game ==> that team won!
   //9- 
   
-  gettimeofday(&game_state.start_simulation_time, NULL); 
+  if(gettimeofday(&game_state.start_simulation_time, NULL) == -1){
+    perror("gettimeofday failed");
+    return TIMER_ERROR;
+  } 
 
   while (game_state.current_simulation_time <= game_state.max_simulation_time || game_state.number_of_rounds_played < game_state.max_number_of_rounds) {
 
-      game_state.current_simulation_time = (now.tv_usec - game_state.start_simulation_time.tv_usec) / 1000;
+      if (gettimeofday(&now, NULL) == -1) {
+        perror("gettimeofday failed");
+        return TIMER_ERROR;
+      }
+
+      game_state.current_simulation_time = (now.tv_sec - game_state.start_simulation_time.tv_sec) * 1000 + (now.tv_usec - game_state.start_simulation_time.tv_usec) / 1000;
       
       //read energies from players
       receive_data_from_team(&team1);
@@ -57,11 +65,19 @@ int main(int argc, char *argv[]) {
       send_position_to_team(&team1);
       send_position_to_team(&team2);
 
-      gettimeofday(&game_state.start_round_time, NULL); 
+      if (gettimeofday(&game_state.start_round_time, NULL) == -1){
+        perror("gettimeofday failed");
+        return TIMER_ERROR;
+      } 
       
       while(game_state.current_round_time <= game_state.max_simulation_time){
+
+          if (gettimeofday(&now, NULL) == -1) {
+            perror("gettimeofday failed");
+            return TIMER_ERROR;
+          }
           //checks for round time
-          game_state.current_round_time = (now.tv_usec - game_state.start_round_time.tv_usec) / 1000; // Seconds to ms
+          game_state.current_round_time = (now.tv_sec - game_state.start_round_time.tv_sec) * 1000 + (now.tv_usec - game_state.start_round_time.tv_usec) / 1000; // Seconds to ms
           
           if(game_state.current_round_time % 1000 == 0){
               for(int i = 0; i< team1.size; i++){
