@@ -42,6 +42,15 @@ int parse_game_config(char *buf, GameConfig *game_config) {
     return 0;
   }
 
+  if (sscanf(buf, " max_consecutive_wins = %ld",
+            &game_config->max_consecutive_wins) == 1) {
+    if (game_config->max_consecutive_wins <= 0) {
+      fprintf(stderr, "max_consecutive_wins must be positive.\n");
+      return CONFIG_ERROR;
+    }
+    return 0;
+  }
+
   fprintf(stderr, "Invalid line in config file\n");
   return CONFIG_ERROR;
 }
@@ -49,7 +58,8 @@ int parse_game_config(char *buf, GameConfig *game_config) {
 const GameConfig DEFAULT_CONFIG = {
     .max_simulation_time = 100,
     .max_number_of_rounds = 5,
-    .score_gap_to_win = 10
+    .score_gap_to_win = 10,
+    .max_consecutive_wins = 2
 };
 
 int fprintf_game_config(FILE *stream, const GameConfig *game_config) {
@@ -61,6 +71,8 @@ int fprintf_game_config(FILE *stream, const GameConfig *game_config) {
           game_config->max_number_of_rounds);
   fprintf(stream, "score_gap_to_win = %ld\n",
           game_config->score_gap_to_win);
+  fprintf(stream, "max_consecutive_wins = %ld\n",
+          game_config->max_consecutive_wins);
   fflush(stream);
   return 0;
 }

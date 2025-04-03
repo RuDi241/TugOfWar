@@ -1,8 +1,8 @@
-#include "../include/game_state.h"
+#include "../../include/game_state.h"
 #include <stdlib.h>
 
 int init_game_state(GameState *game_state, GameConfig *game_config, TeamConfig *team1_config, TeamConfig *team2_config){
-    game_state->in_round = 'o';
+    game_state->in_round = '0';
 
     game_state->current_simulation_time = 0;
     game_state->max_simulation_time = game_config->max_simulation_time;
@@ -18,6 +18,10 @@ int init_game_state(GameState *game_state, GameConfig *game_config, TeamConfig *
 
     game_state->team1_sum = 0;
     game_state->team2_sum = 0;
+
+    game_state->max_consecutive_wins = game_config->max_consecutive_wins;
+    game_state->current_win_streak = 0;
+    game_state->previous_round_result = DRAW;
 
     make_team(&game_state->team1, team1_config);
     make_team(&game_state->team2, team2_config);

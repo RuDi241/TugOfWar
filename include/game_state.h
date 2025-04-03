@@ -7,7 +7,12 @@
 #include "string_buf.h"
 #include <sys/time.h>
 
-//ALL IN milliseconds
+enum PreviousRoundResult {
+  DRAW,
+  TEAM1_WIN,
+  TEAM2_WIN
+};
+
 typedef struct GameState {
   char in_round;
   
@@ -29,6 +34,10 @@ typedef struct GameState {
 
   int team1_sum;
   int team2_sum;
+
+  int max_consecutive_wins;
+  enum PreviousRoundResult previous_round_result;
+  int current_win_streak;
 
 } GameState;
 
