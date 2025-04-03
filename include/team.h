@@ -20,5 +20,5 @@ int destroy_team(Team *team);
 int serialize_team(Team *team, StringBuf *string_buf);
 int deserialize_team(Team *team, StringBuf *string_buf);
 int arrange_team(Team *team);
-
+int announce_result_to_team(Team *team, int is_winner);
 #endif

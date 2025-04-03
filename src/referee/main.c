@@ -6,6 +6,7 @@
 #include "../../include/player.h"
 #include <sys/time.h>
 #include <signal.h>
+#include <stdlib.h>
 
 int main(int argc, char *argv[]) {
   struct timeval now;
@@ -14,8 +15,6 @@ int main(int argc, char *argv[]) {
   GameState game_state;
   TeamConfig team1_config;
   TeamConfig team2_config;
-  Team team1;
-  Team team2;  
 
   if (read_game_config("./game_config.txt", &game_config))
     return CONFIG_ERROR;
@@ -29,24 +28,15 @@ int main(int argc, char *argv[]) {
 
   //init game state
   init_game_state(&game_state, &game_config, &team1_config, &team2_config);
-
-
-  //1- while curr_simulation time less than total_sim_time
-  //2- arrange player
-  //3- start new round
-  //4- wait for a second
-  //5- send signal to receive data from each player
-  //6- if desired score reached ==> end round ==> announce winner ==> update game_state ==> back to 2
-  //7- if time's up ==> end round ==> see which team got the higher score ==> announce winner ==> update game_state ==> back to 2
-  //8- if a team won two consecutive games ==> end game ==> that team won!
-  //9- 
   
   if(gettimeofday(&game_state.start_simulation_time, NULL) == -1){
     perror("gettimeofday failed");
     return TIMER_ERROR;
   } 
 
-  while (game_state.current_simulation_time <= game_state.max_simulation_time || game_state.number_of_rounds_played < game_state.max_number_of_rounds) {
+  while (game_state.current_simulation_time <= game_state.max_simulation_time || 
+    game_state.number_of_rounds_played < game_state.max_number_of_rounds ||
+    game_state.current_win_streak >= game_state.max_consecutive_wins) {
 
       if (gettimeofday(&now, NULL) == -1) {
         perror("gettimeofday failed");
@@ -56,20 +46,21 @@ int main(int argc, char *argv[]) {
       game_state.current_simulation_time = (now.tv_sec - game_state.start_simulation_time.tv_sec) * 1000 + (now.tv_usec - game_state.start_simulation_time.tv_usec) / 1000;
       
       //read energies from players
-      receive_data_from_team(&team1);
-      receive_data_from_team(&team2);
+      receive_data_from_team(&game_state.team1);
+      receive_data_from_team(&game_state.team2);
 
-      arrange_team(&team1);
-      arrange_team(&team2);
+      arrange_team(&game_state.team1);
+      arrange_team(&game_state.team2);
 
-      send_position_to_team(&team1);
-      send_position_to_team(&team2);
+      send_position_to_team(&game_state.team1);
+      send_position_to_team(&game_state.team2);
 
       if (gettimeofday(&game_state.start_round_time, NULL) == -1){
         perror("gettimeofday failed");
         return TIMER_ERROR;
       } 
       
+      game_state.in_round = '1';
       while(game_state.current_round_time <= game_state.max_simulation_time){
 
           if (gettimeofday(&now, NULL) == -1) {
@@ -80,39 +71,44 @@ int main(int argc, char *argv[]) {
           game_state.current_round_time = (now.tv_sec - game_state.start_round_time.tv_sec) * 1000 + (now.tv_usec - game_state.start_round_time.tv_usec) / 1000; // Seconds to ms
           
           if(game_state.current_round_time % 1000 == 0){
-              for(int i = 0; i< team1.size; i++){
+              for(int i = 0; i< game_state.team1.size; i++){
                 kill(game_state.team1.players[i].pid, SIGUSR2);
               }
 
-              for(int i = 0; i< team2.size; i++){
+              for(int i = 0; i< game_state.team2.size; i++){
                 kill(game_state.team2.players[i].pid, SIGUSR2);
               }
 
-              receive_data_from_team(&team1);
-              receive_data_from_team(&team2);
+              receive_data_from_team(&game_state.team1);
+              receive_data_from_team(&game_state.team2);
 
-              for(int i = 0; i < team1.size; i++)
-                  game_state.team1_sum += team1.players[i].energy;
+              for(int i = 0; i < game_state.team1.size; i++)
+                  game_state.team1_sum += game_state.team1.players[i].energy;
 
-              for(int i = 0; i < team2.size; i++)
-                  game_state.team2_sum += team2.players[i].energy;
+              for(int i = 0; i < game_state.team1.size; i++)
+                  game_state.team2_sum += game_state.team1.players[i].energy;
 
               game_state.round_score += (game_state.team1_sum - game_state.team2_sum);
 
-              /**
-               * TODO: 1- IMPLEMENT WINNING LOGIC
-               *       2- CHECK MAX SCORE IN GAME-STATE (I SO NOT KNOW WHERE IT IS OR HOW IT SHOULD BE ADDED)
-               * 
-               */
+              printf("Round sum: %d\n", game_state.round_score);
+              printf("Team 1 total energy: %d\n", game_state.team1_sum);
+              printf("Team 2 total energy: %d\n", game_state.team2_sum);
+
+
+              if(abs(game_state.round_score) >= game_state.score_gap_to_win){
+                break;
+              }
 
             }
 
       }
 
-      
-
-
+      end_round_protocol(&game_state);
   }
+
+  end_simulation_protocol(&game_state);
+
+  destroy_game_state(&game_state);
 
 
   return 0;

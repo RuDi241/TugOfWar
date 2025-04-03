@@ -129,3 +129,23 @@ int receive_data_from_team(Team *team) {
 
   return 0;
 }
+
+int announce_result_to_team(Team *team, int is_winner) {
+  for (int i = 0; i < team->size; i++)
+  {
+    write(team->players[i].to_referee_fd[1], &is_winner, sizeof(is_winner));
+    kill(team->players[i].pid, SIGUSR1);
+  }
+
+  return 0;
+}
+
+int destroy_team(Team *team){
+  for(int i = 0; i < team->size; i++){
+    close(team->players[i].to_player_fd[1]);
+    close(team->players[i].to_referee_fd[0]);
+  }
+
+  free(team->players);
+  return 0;
+}

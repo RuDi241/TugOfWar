@@ -28,6 +28,7 @@ typedef struct GameState {
 
   int round_score;
   PairIntInt simulation_score;
+  int score_gap_to_win;
 
   Team team1;
   Team team2;
@@ -43,6 +44,9 @@ typedef struct GameState {
 
 int init_game_state(GameState *game_state, GameConfig *game_config,
                     TeamConfig *team1_config, TeamConfig *team2_config);
+int destroy_game_state(GameState *game_state);
+int end_round_protocol(GameState *game_state);
+int end_simulation_protocol(GameState *game_state);
 int serialize_game_state(GameState *game_state, StringBuf *string_buf);
 int deserialize_game_state(GameState *game_state, StringBuf *string_buf);
 #endif
