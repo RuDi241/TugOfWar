@@ -1,9 +1,9 @@
-#include "../include/error_codes.h"
-#include "../include/game_config.h"
-#include "../include/team_config.h"
-#include "../include/team.h"
-#include "../include/game_state.h"
-#include "../include/player.h"
+#include "../../include/error_codes.h"
+#include "../../include/game_config.h"
+#include "../../include/team_config.h"
+#include "../../include/team.h"
+#include "../../include/game_state.h"
+#include "../../include/player.h"
 #include <sys/time.h>
 #include <signal.h>
 

@@ -1,5 +1,5 @@
-#include "../include/game_config.h"
-#include "../include/error_codes.h"
+#include "../../include/game_config.h"
+#include "../../include/error_codes.h"
 #include <stdio.h>
 #include <string.h>
 

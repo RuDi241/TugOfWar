@@ -1,7 +1,7 @@
-#include "../include/team_config.h"
-#include "../include/team.h"
-#include "../include/player.h"
-#include "../include/error_codes.h"
+#include "../../include/team_config.h"
+#include "../../include/team.h"
+#include "../../include/player.h"
+#include "../../include/error_codes.h"
 #include <stdlib.h>
 #include <signal.h>
 
