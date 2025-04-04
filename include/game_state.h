@@ -8,9 +8,15 @@
 #include <sys/time.h>
 
 enum PreviousRoundResult {
-  DRAW,
+  TEAM1_TEAM2_DRAW,
   TEAM1_WIN,
   TEAM2_WIN
+};
+
+enum RoundTeamResult {
+  DRAW,
+  LOSE,
+  WIN,
 };
 
 typedef struct GameState {

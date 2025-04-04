@@ -1,7 +1,32 @@
 #include "../../include/game_state.h"
+#include "../../include/error_codes.h"
 #include <stdlib.h>
 
-int init_game_state(GameState *game_state, GameConfig *game_config, TeamConfig *team1_config, TeamConfig *team2_config){
+int read_configurations(GameConfig *game_config, TeamConfig *team1_config, TeamConfig *team2_config)
+{
+    if (read_game_config("./game_config.txt", game_config))
+    {
+        fprintf(stderr, "Error reading game configuration.\n");
+        return CONFIG_ERROR;
+    }
+    if (read_team_config("./team1_config.txt", team1_config))
+    {
+        fprintf(stderr, "Error reading team 1 configuration.\n");
+        return CONFIG_ERROR;
+    }
+    if (read_team_config("./team2_config.txt", team2_config))
+    {
+        fprintf(stderr, "Error reading team 2 configuration.\n");
+        return CONFIG_ERROR;
+    }
+    fprintf_game_config(stdout, game_config);
+    fprintf_team_config(stdout, team1_config);
+    fprintf_team_config(stdout, team2_config);
+    return 0; // Success
+}
+
+int init_game_state(GameState *game_state, GameConfig *game_config, TeamConfig *team1_config, TeamConfig *team2_config)
+{
     game_state->in_round = '0';
 
     game_state->current_simulation_time = 0;
@@ -30,45 +55,62 @@ int init_game_state(GameState *game_state, GameConfig *game_config, TeamConfig *
     return 0;
 }
 
-int decide_round_winner(GameState *game_state){
-    if(game_state->round_score > 0){
+int decide_round_winner(GameState *game_state)
+{
+    if (game_state->round_score > 0)
+    {
         game_state->simulation_score.first++;
-        announce_result_to_team(&game_state->team1, 1);
-        announce_result_to_team(&game_state->team2, 0);
-    }else if(game_state->round_score < 0){
+        announce_result_to_team(&game_state->team1, WIN);
+        announce_result_to_team(&game_state->team2, LOSE);
+    }
+    else if (game_state->round_score < 0)
+    {
         game_state->simulation_score.second++;
-        announce_result_to_team(&game_state->team1, 0);
-        announce_result_to_team(&game_state->team2, 1);
-    }else{
-        announce_result_to_team(&game_state->team1, 2);
-        announce_result_to_team(&game_state->team2, 2);
+        announce_result_to_team(&game_state->team1, LOSE);
+        announce_result_to_team(&game_state->team2, WIN);
+    }
+    else
+    {
+        announce_result_to_team(&game_state->team1, DRAW);
+        announce_result_to_team(&game_state->team2, DRAW);
     }
     return 0;
 }
 
-int decide_win_streak(GameState *game_state){
-    if(game_state->previous_round_result == TEAM1_WIN && game_state->round_score > 0){
-        game_state->current_win_streak++;
-      }else if(game_state->previous_round_result == TEAM2_WIN && game_state->round_score < 0){
-        game_state->current_win_streak++;
-      }else{
+int decide_win_streak(GameState *game_state)
+{
+    if (game_state->round_score == 0)
+    { // Draw and any streak is broken
         game_state->current_win_streak = 0;
-      }
-      return 0;
-}
+        return 0;
+    }
 
-int choose_prev_round_winner(GameState *game_state){
-    if(game_state->round_score > 0)
-        game_state->previous_round_result = TEAM1_WIN;
-    else if(game_state->round_score < 0)
-        game_state->previous_round_result = TEAM2_WIN;
+    // Check if the previous round was a win for the same team (streak maintained)
+    if (game_state->previous_round_result == TEAM1_WIN && game_state->round_score > 0 ||
+        game_state->previous_round_result == TEAM2_WIN && game_state->round_score < 0)
+    {
+        game_state->current_win_streak++;
+    }
     else
-        game_state->previous_round_result = DRAW;
+    {
+        game_state->current_win_streak = 1; // Reset streak for the winning team (first win for this team in the streak)
+    }
     return 0;
 }
 
+int choose_prev_round_winner(GameState *game_state)
+{
+    if (game_state->round_score > 0)
+        game_state->previous_round_result = TEAM1_WIN;
+    else if (game_state->round_score < 0)
+        game_state->previous_round_result = TEAM2_WIN;
+    else
+        game_state->previous_round_result = TEAM1_TEAM2_DRAW;
+    return 0;
+}
 
-int reset_round(GameState *game_state){
+int reset_round(GameState *game_state)
+{
     game_state->current_round_time = 0;
     game_state->round_score = 0;
     game_state->team1_sum = 0;
@@ -76,44 +118,54 @@ int reset_round(GameState *game_state){
     return 0;
 }
 
-int end_round_protocol(GameState *game_state){
+int end_round_protocol(GameState *game_state)
+{
     game_state->number_of_rounds_played++;
 
-    //decide who won round
+    // decide who won round
     decide_round_winner(game_state);
 
-    //decide win steak
+    // decide win steak
     decide_win_streak(game_state);
-  
-    //choose previouse round winner
+
+    // choose previouse round winner
     choose_prev_round_winner(game_state);
 
-    //reset the round data for the new round
+    // reset the round data for the new round
     reset_round(game_state);
 
-    game_state->in_round = '0'; 
+    game_state->in_round = '0';
 
     return 0;
 }
 
-int end_simulation_protocol(GameState *game_state){
-    if (game_state->current_win_streak >= game_state->max_consecutive_wins){
+int end_simulation_protocol(GameState *game_state)
+{
+    if (game_state->current_win_streak >= game_state->max_consecutive_wins)
+    {
         if (game_state->previous_round_result == TEAM1_WIN)
-          printf("Team1 has won the match by winning %d consecutive rounds!\n", game_state->current_win_streak);
+            printf("Team1 has won the match by winning %d consecutive rounds!\n", game_state->current_win_streak);
         else
-          printf("Team2 has won the match by winning %d consecutive rounds!\n", game_state->current_win_streak);
-    }else if (game_state->simulation_score.first > game_state->simulation_score.second){
-          printf("Team 1 wins the simulation with score %d - %d!\n", game_state->simulation_score.first, game_state->simulation_score.second);
-    }else if (game_state->simulation_score.first < game_state->simulation_score.second){
+            printf("Team2 has won the match by winning %d consecutive rounds!\n", game_state->current_win_streak);
+    }
+    else if (game_state->simulation_score.first > game_state->simulation_score.second)
+    {
+        printf("Team 1 wins the simulation with score %d - %d!\n", game_state->simulation_score.first, game_state->simulation_score.second);
+    }
+    else if (game_state->simulation_score.first < game_state->simulation_score.second)
+    {
         printf("Team 2 wins the simulation with score %d - %d!\n", game_state->simulation_score.first, game_state->simulation_score.second);
-    }else{
+    }
+    else
+    {
         printf("Simulation ended in a draw with sore %d - %d!\n", game_state->simulation_score.first, game_state->simulation_score.second);
     }
 
     return 0;
 }
 
-int destroy_game_state(GameState *game_state){
+int destroy_game_state(GameState *game_state)
+{
     destroy_team(&game_state->team1);
     destroy_team(&game_state->team2);
 
