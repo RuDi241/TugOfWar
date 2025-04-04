@@ -1,36 +1,43 @@
-#include <GL/gl.h>
+#include "../../include/glad/glad.h" // https://glad.dav1d.de/
 #include <GLFW/glfw3.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-int main(void) {
-  GLFWwindow *window;
+#define WIDTH 800
+#define HEIGHT 600
 
-  /* Initialize the library */
-  if (!glfwInit())
-    return -1;
+// Resize framebuffer_size_callback
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+  glViewport(0, 0, width, height);
+}
 
-  /* Create a windowed mode window and its OpenGL context */
-  window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-  if (!window) {
+int main() {
+  glfwInit();
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+  // Create OpenGL window
+  GLFWwindow *window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+  if (window == NULL) {
+    fprintf(stderr, "Failed to create GLFW window");
     glfwTerminate();
     return -1;
   }
-
-  /* Make the window's context current */
   glfwMakeContextCurrent(window);
+  // Load function pointers with glad
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    fprintf(stderr, "Failed to initialize GLAD");
+    return -1;
+  }
+  framebuffer_size_callback(window, WIDTH, HEIGHT);
+  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-  /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window)) {
-
-    /* Render here */
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    /* Swap front and back buffers */
     glfwSwapBuffers(window);
-
-    /* Poll for and process events */
     glfwPollEvents();
   }
-
   glfwTerminate();
   return 0;
 }

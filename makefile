@@ -14,7 +14,7 @@ PROGRAMS := referee player graphics
 # Program-specific linker flags
 REFEREE_LDFLAGS :=
 PLAYER_LDFLAGS :=
-GRAPHICS_LDFLAGS := -lglfw -lGL
+GRAPHICS_LDFLAGS := -lglfw -lGL -lm -ldl
 
 # Directories
 SRC_DIR := src
