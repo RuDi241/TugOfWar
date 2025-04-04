@@ -25,7 +25,7 @@ int init_game_state(GameState *game_state, GameConfig *game_config, TeamConfig *
 
     game_state->score_gap_to_win = game_config->score_gap_to_win;
     game_state->current_win_streak = 0;
-    game_state->previous_round_result = DRAW;
+    game_state->previous_round_result = TEAM1_TEAM2_DRAW;
 
     make_team(&game_state->team1, team1_config);
     make_team(&game_state->team2, team2_config);
@@ -64,8 +64,8 @@ int decide_win_streak(GameState *game_state)
     }
 
     // Check if the previous round was a win for the same team (streak maintained)
-    if (game_state->previous_round_result == TEAM1_WIN && game_state->round_score > 0 ||
-        game_state->previous_round_result == TEAM2_WIN && game_state->round_score < 0)
+    if ((game_state->previous_round_result == TEAM1_WIN && game_state->round_score > 0) ||
+        (game_state->previous_round_result == TEAM2_WIN && game_state->round_score < 0))
     {
         game_state->current_win_streak++;
     }
