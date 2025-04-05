@@ -14,17 +14,17 @@ PROGRAMS := referee player graphics
 # Program-specific linker flags
 REFEREE_LDFLAGS :=
 PLAYER_LDFLAGS :=
-GRAPHICS_LDFLAGS := -lglfw -lGL -lm -ldl
+GRAPHICS_LDFLAGS := -lglfw -lGL -lm -ldl -lfreetype
 
 # Directories
 SRC_DIR := src
-INCLUDE_DIR := include
+INCLUDE_DIR := -I./include -I/usr/include/freetype2
 BUILD_ROOT := build
 BIN_DIR := bin
 BUILD_DIR := $(BUILD_ROOT)/$(BUILD)
 
 # Common compiler flags
-COMMON_CFLAGS := -Wall -Wextra -I$(INCLUDE_DIR)
+COMMON_CFLAGS := -Wall -Wextra $(INCLUDE_DIR)
 
 # Debug and release specific flags
 ifeq ($(BUILD),debug)
