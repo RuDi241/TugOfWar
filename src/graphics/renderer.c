@@ -15,7 +15,8 @@ static GLuint triangleVAO, triangleVBO;
 // Text rendering variables
 static GLuint textShaderProgram;
 static GLuint textVAO, textVBO;
-static Character characters[128]; // Store ASCII characters
+#define ASCII_CHARACTER_SET_SIZE 128
+static Character characters[ASCII_CHARACTER_SET_SIZE]; // Store ASCII characters
 static FT_Library ft;
 static FT_Face face;
 static int windowWidth = 800;  // Default window size
@@ -202,6 +203,138 @@ void drawCircle(Circle circle) {
   glUseProgram(0);
 }
 
+void renderText(const char *text, float x, float y, float scale, float r,
+                float g, float b, float a) {
+  // Activate shader and set text color
+  glUseProgram(textShaderProgram);
+  glUniform4f(glGetUniformLocation(textShaderProgram, "textColor"), r, g, b, a);
+
+  // Create orthographic projection matrix for screen-space text rendering
+  // This maps pixel coordinates to NDC coordinates
+  float left = 0.0f;
+  float right = windowWidth;
+  float bottom = 0.0f;
+  float top = windowHeight;
+  float projection[16] = {0};
+
+  // Manual creation of orthographic projection matrix
+  projection[0] = 2.0f / (right - left);
+  projection[5] = 2.0f / (top - bottom);
+  projection[10] = -2.0f / (1.0f - (-1.0f));
+  projection[12] = -(right + left) / (right - left);
+  projection[13] = -(top + bottom) / (top - bottom);
+  projection[14] = -(-1.0f - 1.0f) / (1.0f - (-1.0f));
+  projection[15] = 1.0f;
+
+  // Set projection matrix uniform
+  glUniformMatrix4fv(glGetUniformLocation(textShaderProgram, "projection"), 1,
+                     GL_FALSE, projection);
+
+  // Rest of your function stays the same
+  glActiveTexture(GL_TEXTURE0);
+  glBindVertexArray(textVAO);
+
+  // Enable blending for proper text rendering
+  GLboolean blendWasEnabled = glIsEnabled(GL_BLEND);
+  if (!blendWasEnabled) {
+    glEnable(GL_BLEND);
+  }
+
+  // Save original blend function
+  GLint originalSrcFactor, originalDstFactor;
+  glGetIntegerv(GL_BLEND_SRC_ALPHA, &originalSrcFactor);
+  glGetIntegerv(GL_BLEND_DST_ALPHA, &originalDstFactor);
+
+  // Set appropriate blend function for text
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  // Iterate through and render each character in the text
+  float xpos = (x + 1.0f) * windowWidth / 2.0f;
+  float ypos = (y + 1.0f) * windowHeight / 2.0f;
+
+  for (const char *c = text; *c; c++) {
+    Character ch = characters[(unsigned char)*c];
+
+    if (ch.textureID == 0)
+      continue; // Skip if glyph wasn't loaded
+
+    // Calculate character position and size
+    float xpos_with_bearing = xpos + ch.bearingX * scale;
+    float ypos_with_bearing = ypos - (ch.height - ch.bearingY) * scale;
+
+    float w = ch.width * scale;
+    float h = ch.height * scale;
+
+    // Skip rendering if character has no width or height
+    if (w <= 0 || h <= 0) {
+      // Advance cursor for space characters and other non-visible glyphs
+      xpos += (ch.advance >> 6) * scale;
+      continue;
+    }
+
+    // Create quad vertices for this character with proper texture coordinates
+    float vertices[6][4] = {
+        {xpos_with_bearing, ypos_with_bearing + h, 0.0f, 0.0f},
+        {xpos_with_bearing, ypos_with_bearing, 0.0f, 1.0f},
+        {xpos_with_bearing + w, ypos_with_bearing, 1.0f, 1.0f},
+
+        {xpos_with_bearing, ypos_with_bearing + h, 0.0f, 0.0f},
+        {xpos_with_bearing + w, ypos_with_bearing, 1.0f, 1.0f},
+        {xpos_with_bearing + w, ypos_with_bearing + h, 1.0f, 0.0f}};
+
+    // Bind character texture
+    glBindTexture(GL_TEXTURE_2D, ch.textureID);
+
+    // Update content of VBO memory
+    glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Render quad
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // Advance cursor for next glyph
+    xpos += (ch.advance >> 6) * scale; // Bitshift by 6 to get value in pixels
+  }
+
+  // Restore previous blend state
+  if (!blendWasEnabled) {
+    glDisable(GL_BLEND);
+  }
+  glBlendFunc(originalSrcFactor, originalDstFactor);
+
+  // Unbind resources
+  glBindVertexArray(0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glUseProgram(0);
+}
+
+void debugTextRendering() {
+  printf("Window dimensions: %d x %d\n", windowWidth, windowHeight);
+
+  // Print character metrics for a few basic characters
+  printf("Character 'A' metrics:\n");
+  printf("  Width: %d, Height: %d\n", characters['A'].width,
+         characters['A'].height);
+  printf("  BearingX: %d, BearingY: %d\n", characters['A'].bearingX,
+         characters['A'].bearingY);
+  printf("  Advance: %u\n", characters['A'].advance);
+
+  // Check if shader and textures are valid
+  printf("Text shader program ID: %u\n", textShaderProgram);
+  printf("Text VAO ID: %u\n", textVAO);
+  printf("Text VBO ID: %u\n", textVBO);
+
+  // Check if 'A' texture exists
+  GLint textureWidth, textureHeight;
+  glBindTexture(GL_TEXTURE_2D, characters['A'].textureID);
+  glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &textureWidth);
+  glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &textureHeight);
+  printf("Character 'A' texture dimensions: %d x %d\n", textureWidth,
+         textureHeight);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 int initTextRenderer(const char *fontPath, int fontSize) {
   // Create shader program specifically for text rendering
   const char *textVertexShaderSrc =
@@ -246,8 +379,8 @@ int initTextRenderer(const char *fontPath, int fontSize) {
   // Disable byte-alignment restriction for proper texture loading
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  // Load and store first 128 ASCII characters
-  for (unsigned char c = 0; c < 128; c++) {
+  // Load and store ASCII characters
+  for (unsigned char c = 0; c < ASCII_CHARACTER_SET_SIZE; c++) {
     // Load character glyph
     if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
       printf("ERROR: Failed to load glyph for character %c\n", c);
@@ -271,6 +404,7 @@ int initTextRenderer(const char *fontPath, int fontSize) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Store character metrics for later use
+    // Make sure this matches our Character struct
     Character character = {texture,
                            face->glyph->bitmap.width,
                            face->glyph->bitmap.rows,
@@ -281,7 +415,7 @@ int initTextRenderer(const char *fontPath, int fontSize) {
   }
   glBindTexture(GL_TEXTURE_2D, 0);
 
-  // Set text texture uniform once (doesn't change)
+  // Use shader and set fixed uniform
   glUseProgram(textShaderProgram);
   glUniform1i(glGetUniformLocation(textShaderProgram, "text"), 0);
   glUseProgram(0);
@@ -304,118 +438,9 @@ int initTextRenderer(const char *fontPath, int fontSize) {
 
   return 0;
 }
-
-void renderText(const char *text, float x, float y, float scale, float r,
-                float g, float b, float a) {
-  // Activate shader and set text color
-  glUseProgram(textShaderProgram);
-  glUniform4f(glGetUniformLocation(textShaderProgram, "textColor"), r, g, b, a);
-
-  // Create orthographic projection matrix for screen-space rendering
-  // This maps from pixel coordinates to normalized device coordinates
-  float projection[16] = {2.0f / windowWidth,
-                          0.0f,
-                          0.0f,
-                          -1.0f,
-                          0.0f,
-                          -2.0f / windowHeight,
-                          0.0f,
-                          1.0f,
-                          0.0f,
-                          0.0f,
-                          -1.0f,
-                          0.0f,
-                          0.0f,
-                          0.0f,
-                          0.0f,
-                          1.0f};
-
-  // Set projection matrix uniform
-  glUniformMatrix4fv(glGetUniformLocation(textShaderProgram, "projection"), 1,
-                     GL_FALSE, projection);
-
-  // Activate texture unit for text rendering
-  glActiveTexture(GL_TEXTURE0);
-  glBindVertexArray(textVAO);
-
-  // Enable blending for proper text rendering
-  GLboolean blendWasEnabled = glIsEnabled(GL_BLEND);
-  if (!blendWasEnabled) {
-    glEnable(GL_BLEND);
-  }
-
-  // Save original blend function
-  GLint originalSrcFactor, originalDstFactor;
-  glGetIntegerv(GL_BLEND_SRC_ALPHA, &originalSrcFactor);
-  glGetIntegerv(GL_BLEND_DST_ALPHA, &originalDstFactor);
-
-  // Set appropriate blend function for text
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  // Iterate through and render each character in the text
-  float xpos = x;
-  float ypos = y;
-
-  for (const char *c = text; *c; c++) {
-    Character ch = characters[(unsigned char)*c];
-
-    if (ch.textureID == 0)
-      continue; // Skip if glyph wasn't loaded
-
-    // Calculate character position and size
-    float char_x = xpos + ch.bearingX * scale;
-    float char_y = ypos - (ch.height - ch.bearingY) * scale;
-    float w = ch.width * scale;
-    float h = ch.height * scale;
-
-    // Skip rendering if character has no width or height
-    if (w <= 0 || h <= 0) {
-      // Advance cursor for space characters and other non-visible glyphs
-      xpos += (ch.advance >> 6) * scale;
-      continue;
-    }
-
-    // Create quad vertices for this character with correct texture coordinates
-    float vertices[6][4] = {
-        {char_x, char_y + h, 0.0f, 0.0f}, // top left
-        {char_x, char_y, 0.0f, 1.0f},     // bottom left
-        {char_x + w, char_y, 1.0f, 1.0f}, // bottom right
-
-        {char_x, char_y + h, 0.0f, 0.0f},    // top left
-        {char_x + w, char_y, 1.0f, 1.0f},    // bottom right
-        {char_x + w, char_y + h, 1.0f, 0.0f} // top right
-    };
-
-    // Bind character texture
-    glBindTexture(GL_TEXTURE_2D, ch.textureID);
-
-    // Update content of VBO memory
-    glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Render quad
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    // Advance cursor for next glyph
-    xpos += (ch.advance >> 6) * scale; // Bitshift by 6 to get value in pixels
-  }
-
-  // Restore previous blend state
-  if (!blendWasEnabled) {
-    glDisable(GL_BLEND);
-  }
-  glBlendFunc(originalSrcFactor, originalDstFactor);
-
-  // Unbind resources
-  glBindVertexArray(0);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glUseProgram(0);
-}
-
 void shutdownTextRenderer() {
   // Delete character textures
-  for (unsigned char c = 0; c < 128; c++) {
+  for (unsigned char c = 0; c < ASCII_CHARACTER_SET_SIZE; c++) {
     if (characters[c].textureID != 0) {
       glDeleteTextures(1, &characters[c].textureID);
     }

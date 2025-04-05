@@ -4,16 +4,15 @@
 #include <glad/glad.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include <stdio.h> // For error reporting
 
-// Rectangle shape for 2D rendering
+// Rectangle shape
 typedef struct {
   GLfloat x, y;          // Center position
   GLfloat width, height; // Dimensions
   GLfloat r, g, b, a;    // Color
 } Rectangle;
 
-// Circle shape for 2D rendering
+// Circle shape
 typedef struct {
   GLfloat x, y;       // Center position
   GLfloat radius;     // Circle radius
@@ -21,7 +20,7 @@ typedef struct {
   int segments;       // Number of segments (detail level)
 } Circle;
 
-// Triangle shape for 2D rendering
+// Triangle shape
 typedef struct {
   GLfloat x1, y1;     // First vertex
   GLfloat x2, y2;     // Second vertex
@@ -31,10 +30,12 @@ typedef struct {
 
 // Character information for text rendering
 typedef struct {
-  GLuint textureID;       // Texture containing glyph image
-  int width, height;      // Size of the glyph
-  int bearingX, bearingY; // Offset from baseline
-  int advance;            // Horizontal advance for next character
+  GLuint textureID;     // ID handle of the glyph texture
+  int width;            // Size of glyph (width)
+  int height;           // Size of glyph (height)
+  int bearingX;         // Bearing X (offset from baseline to left of glyph)
+  int bearingY;         // Bearing Y (offset from baseline to top of glyph)
+  unsigned int advance; // Advance width for next character
 } Character;
 
 // Core renderer functions
@@ -51,6 +52,7 @@ void drawTriangle(Triangle triangle);
 int initTextRenderer(const char *fontPath, int fontSize);
 void renderText(const char *text, float x, float y, float scale, float r,
                 float g, float b, float a);
+void debugTextRendering();
 void shutdownTextRenderer();
 
 #endif
