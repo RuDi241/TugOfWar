@@ -1,6 +1,20 @@
 #include "../../include/game_interface_communication.h"
 #include <unistd.h>
 
+int compare_players_by_position(const void *a, const void *b) {
+  const Player *player_a = (const Player *)a;
+  const Player *player_b = (const Player *)b;
+
+  // Sort by position in descending order
+  return player_b->position - player_a->position;
+}
+
+void sort_team_by_position(Team *team) {
+  if (team == NULL || team->players == NULL || team->size <= 1) {
+    return;
+  }
+  qsort(team->players, team->size, sizeof(Player), compare_players_by_position);
+}
 ssize_t read_all(int fd, void *buffer, size_t count) {
   size_t bytes_read = 0;
   char *buf = (char *)buffer;
@@ -105,7 +119,7 @@ void receive_data_from_referee(int fd, Display *disp) {
       return;
     }
   }
-
+  sort_team_by_position(&disp->team1);
   // Read team2 data
   int team2_size;
   if (read_all(fd, &team2_size, sizeof(team2_size)) < 0) {
@@ -138,6 +152,8 @@ void receive_data_from_referee(int fd, Display *disp) {
       return;
     }
   }
+
+  sort_team_by_position(&disp->team2);
 
   if (read_all(fd, &disp->team1_sum, sizeof(disp->team1_sum)) < 0) {
     perror("Error reading team1_sum");

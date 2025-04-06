@@ -141,7 +141,7 @@ void drawTriangle(Triangle triangle) {
   glUseProgram(shaderProgram);
   glBindVertexArray(triangleVAO);
 
-  // Create and upload triangle vertices - no scaling adjustment
+  // Create and upload triangle vertices
   GLfloat vertices[] = {triangle.x1, triangle.y1, triangle.x2,
                         triangle.y2, triangle.x3, triangle.y3};
 
