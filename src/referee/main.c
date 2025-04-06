@@ -101,11 +101,17 @@ int main(int argc, char *argv[]) {
         round_time_at_last_measure = game_state.current_round_time;
 
         for (int i = 0; i < game_state.team1.size; i++) {
-          kill(game_state.team1.players[i].pid, SIGUSR2);
+          if (kill(game_state.team1.players[i].pid, SIGUSR2) == -1) {
+            perror("Error sending SIGUSR2 to team 1 player");
+            return SIGNAL_ERROR;
+          }
         }
 
         for (int i = 0; i < game_state.team2.size; i++) {
-          kill(game_state.team2.players[i].pid, SIGUSR2);
+          if(kill(game_state.team2.players[i].pid, SIGUSR2) == -1) {
+            perror("Error sending SIGUSR2 to team 2 player");
+            return SIGNAL_ERROR;
+          }
         }
 
         receive_data_from_team(&game_state.team1);

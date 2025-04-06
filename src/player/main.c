@@ -29,9 +29,6 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  // printf("from player %d %s %s %s %s %s %s %s %s %s\n", getpid(), argv[1],
-  // argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8], argv[9]);
-
   srand(time(NULL) ^ getpid());
 
   player.to_referee_fd[1] = atoi(argv[1]);
@@ -49,11 +46,6 @@ int main(int argc, char *argv[]) {
   player.fall_timeout = 0;
 
   printf("Player %d started with energy %d\n", player.pid, player.energy);
-  // printf("min_energy_loss: %d, max_energy_loss: %d\n", min_energy_loss,
-  // max_energy_loss); printf("min_recovery_time: %d, max_recovery_time: %d\n",
-  // min_recovery_time, max_recovery_time); printf("probability_fall: %d\n",
-  // probability_fall); printf("min_energy: %d, max_energy: %d\n", min_energy,
-  // max_energy); printf("\n");
 
   // Send initial energy to the referee
   write(player.to_referee_fd[1], &player.energy,
@@ -82,12 +74,6 @@ int main(int argc, char *argv[]) {
 }
 
 void SIGUSR1_handler(int sig_num) {
-  // Blocking SIGTERM during SIGUSR1 handler
-  // sigset_t mask;
-  // sigemptyset(&mask);
-  // sigaddset(&mask, SIGTERM);
-  // sigprocmask(SIG_BLOCK, &mask, NULL); // Block SIGTERM signal
-
   if (!received_position) {
     if (read(player.to_player_fd[0], &player.position, sizeof(int)) == -1) {
       perror("Error reading position from pipe");
@@ -116,8 +102,6 @@ void SIGUSR1_handler(int sig_num) {
   } else {
     printf("Player %d is draw\n", player.pid);
   }
-
-  // sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
   // set falltime off to zero (all players get up for the new round)
   player.fall_timeout = 0;
