@@ -1,27 +1,3 @@
-# 🧠 Tug of War Simulation (Multiprocessing + OpenGL)
-
-This project is a Linux-based simulation of a **Tug of War** game using **multiprocessing** and **OpenGL** for visualization. The simulation consists of three processes:
-- `referee`: Manages the game rules, logic, and communication.
-- `player`: Represents a team player that responds to referee signals.
-- `graphics`: Handles graphical representation using OpenGL.
-
-Each team consists of 4 players, and the game progresses over multiple rounds based on player energy, strategy, and random events like falling.
-
----
-
-## 📦 Features
-
-- Multi-process communication using **signals**, **pipes**, and **fifos**.
-- Dynamic configuration from text files (or use defaults).
-- Real-time visualization with **OpenGL + GLFW + FreeType**.
-- Energy-based game mechanics, randomized behaviors, and fall recovery.
-
----
-
-## ⚙️ Configuration Files
-
-Three configuration files control the simulation. If not provided, default ones will be generated.
-
 ### `game_config.txt`
 # 🧠 Tug of War Simulation (Multiprocessing + OpenGL)
 
