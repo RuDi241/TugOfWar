@@ -71,10 +71,6 @@ make
 make BUILD=release
 ```
 
-```
-
-```
-
 and then to run:
 
 ```bash
