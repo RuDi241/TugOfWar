@@ -13,9 +13,8 @@
 #define COLOR_ROYAL_BLUE 0.2f, 0.4f, 0.8f, 1.0f
 #define COLOR_EMERALD_GREEN 0.8f, 0.4f, 0.4f, 1.0f
 // Enviroment Colors
-#define COLOR_DARK_GREY 0.2f, 0.2f, 0.25f, 1.0f
 #define COLOR_SKY_BLUE 0.2f, 0.15f, 0.3f, 1.0f
-#define COLOR_GRASS_GREEN 0.25f, 0.59f, 0.04f, 1.0f
+#define COLOR_GRASS_GREEN 0.20f, 0.45f, 0.15f, 1.0f
 // 0.8f, 0.75f, 0.95f, 1.0f
 #define COLOR_SUN_YELLOW 0.95f, 0.85f, 0.05f, 1.0f
 #define COLOR_SUNSKY_BLEND 0.6f, 0.525f, 0.25f, 1.0f
@@ -111,6 +110,12 @@ void DrawTeamTotals(const Display *display) {
   // Team 2 sum
   snprintf(buf, sizeof(buf), "%d", display->team2_sum);
   renderTextCenter(buf, 0.75f, -0.36f, 1.0f, COLOR_ROYAL_BLUE);
+
+  snprintf(buf, sizeof(buf), "%d", abs(display->round_score));
+  if (display->round_score >= 0)
+    renderTextCenter(buf, 0.0f, -0.36f, 1.0f, COLOR_EMERALD_GREEN);
+  else
+    renderTextCenter(buf, 0.0f, -0.36f, 1.0f, COLOR_ROYAL_BLUE);
 }
 void drawTree(float x, float baseY) {
   // Trunk
@@ -139,7 +144,7 @@ void drawSun() {
 }
 
 void drawGround() {
-  Rectangle ground = {0.0f, -0.5f, 2.0f, 1.0f, COLOR_DARK_GREY};
+  Rectangle ground = {0.0f, -0.5f, 2.0f, 1.0f, COLOR_GRASS_GREEN};
   drawRectangle(ground);
 }
 
