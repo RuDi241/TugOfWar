@@ -149,15 +149,18 @@ int receive_data_from_team(Team *team)
 {
   for (int i = 0; i < team->size; i++)
   {
-    int energyAndTimeOut[2];
-    if (read(team->players[i].to_referee_fd[0], energyAndTimeOut, sizeof(energyAndTimeOut)) <= 0)
+    if (read(team->players[i].to_referee_fd[0], &team->players[i].energy, sizeof(team->players[i].energy)) <= 0)
     {
       perror("Failed to receive data from Player.");
       close(team->players[i].to_referee_fd[0]); // Clean up
       return READ_PIPE_ERROR;
     }
-    team->players[i].energy = energyAndTimeOut[0];
-    team->players[i].fall_timeout = energyAndTimeOut[1];
+    if (read(team->players[i].to_referee_fd[0], &team->players[i].fall_timeout, sizeof(team->players[i].fall_timeout)) <= 0)
+    {
+      perror("Failed to receive data from Player.");
+      close(team->players[i].to_referee_fd[0]); // Clean up
+      return READ_PIPE_ERROR;
+    }
     printf("Player %d: Energy: %d, Fall Timeout: %d\n", team->players[i].pid, team->players[i].energy, team->players[i].fall_timeout);
   }
 
