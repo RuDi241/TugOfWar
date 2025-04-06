@@ -57,9 +57,9 @@ int parse_game_config(char *buf, GameConfig *game_config) {
 
 const GameConfig DEFAULT_CONFIG = {
     .max_simulation_time = 100,
-    .max_number_of_rounds = 5,
-    .score_gap_to_win = 10,
-    .max_consecutive_wins = 2
+    .max_number_of_rounds = 10,
+    .score_gap_to_win = 6000,
+    .max_consecutive_wins = 5
 };
 
 int fprintf_game_config(FILE *stream, const GameConfig *game_config) {

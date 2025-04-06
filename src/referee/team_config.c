@@ -8,9 +8,9 @@
 
 const TeamConfig DEFAULT_TEAM_CONFIG = {
     .num_players = 4,
-    .initial_energy_range = {100, 200},
-    .energy_decay_range = {1, 10},
-    .fall_probability = 0.1,
+    .initial_energy_range = {950, 1000},
+    .energy_decay_range = {1, 5},
+    .fall_probability = 0.01,
     .fall_time_range = {10, 20},
 };
 
