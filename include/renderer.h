@@ -50,8 +50,10 @@ void drawTriangle(Triangle triangle);
 
 // Text rendering functions
 int initTextRenderer(const char *fontPath, int fontSize);
-void renderText(const char *text, float x, float y, float scale, float r,
-                float g, float b, float a);
+void renderTextLeft(const char *text, float x, float y, float scale, float r,
+                    float g, float b, float a);
+void renderTextCenter(const char *text, float x, float y, float scale, float r,
+                      float g, float b, float a);
 void debugTextRendering();
 void shutdownTextRenderer();
 

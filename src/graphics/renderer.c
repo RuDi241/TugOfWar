@@ -19,8 +19,12 @@ static GLuint textVAO, textVBO;
 static Character characters[ASCII_CHARACTER_SET_SIZE]; // Store ASCII characters
 static FT_Library ft;
 static FT_Face face;
-static int windowWidth = 800;  // Default window size
-static int windowHeight = 600; // Default window size
+
+static int baseWindowWidth = 1920;  // Render window size
+static int baseWindowHeight = 1080; // Render window size
+
+static int windowWidth = 1920;  // Default window size
+static int windowHeight = 1080; // Default window size
 
 // Helper function prototypes
 static void setupShaders();
@@ -39,15 +43,15 @@ void initRenderer(int width, int height) {
 }
 
 void setWindowSize(int width, int height) {
-  // Store window dimensions for text rendering projection matrix
+  // Store window dimensions for rendering projection matrix
   windowWidth = width;
   windowHeight = height;
 }
 
 static void setupShaders() {
-  // Create shader program for basic shapes
+  // Original shader code without modifications
   const char *vertexShaderSrc =
-      "#version 330 core\n"
+      "#version 450 core\n"
       "layout (location = 0) in vec2 aPos;\n"
       "uniform vec2 offset;\n"
       "uniform vec2 scale;\n"
@@ -56,7 +60,7 @@ static void setupShaders() {
       "   gl_Position = vec4(scaled + offset, 0.0, 1.0);\n"
       "}\n";
 
-  const char *fragmentShaderSrc = "#version 330 core\n"
+  const char *fragmentShaderSrc = "#version 450 core\n"
                                   "out vec4 FragColor;\n"
                                   "uniform vec4 color;\n"
                                   "void main() {\n"
@@ -67,7 +71,7 @@ static void setupShaders() {
 }
 
 static void setupBuffers() {
-  // Setup rectangle rendering with a unit quad
+  // Original buffer setup without changes
   GLfloat quadVertices[] = {-0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f};
   GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
@@ -106,11 +110,18 @@ static void setupBuffers() {
   glGenBuffers(1, &circleVBO);
 }
 
+// Simple scale factor calculation - only for text and UI elements that should
+// resize
+float getUIScaleFactor() {
+  // Basic UI scaling factor based on width
+  return (float)windowWidth / baseWindowWidth;
+}
+
 void drawRectangle(Rectangle rect) {
   glUseProgram(shaderProgram);
   glBindVertexArray(VAO);
 
-  // Set uniforms for position, size and color
+  // Set uniforms for position, size and color - no scaling adjustment
   GLint offsetLoc = glGetUniformLocation(shaderProgram, "offset");
   GLint scaleLoc = glGetUniformLocation(shaderProgram, "scale");
   GLint colorLoc = glGetUniformLocation(shaderProgram, "color");
@@ -130,7 +141,7 @@ void drawTriangle(Triangle triangle) {
   glUseProgram(shaderProgram);
   glBindVertexArray(triangleVAO);
 
-  // Create and upload triangle vertices
+  // Create and upload triangle vertices - no scaling adjustment
   GLfloat vertices[] = {triangle.x1, triangle.y1, triangle.x2,
                         triangle.y2, triangle.x3, triangle.y3};
 
@@ -167,13 +178,14 @@ void drawCircle(Circle circle) {
   vertices[0] = 0.0f;
   vertices[1] = 0.0f;
 
+  // Calculate proper aspect ratio
+  float aspectRatio = (float)windowWidth / (float)windowHeight;
+
   // Generate vertices around the circle
   for (int i = 0; i <= segments; i++) {
     float angle = 2.0f * M_PI * i / segments;
-    // We need to account for the aspect ratio to make it a proper circle
-    float aspectRatio = (float)windowWidth / (float)windowHeight;
     vertices[(i + 1) * 2] = cosf(angle);
-    vertices[(i + 1) * 2 + 1] = sinf(angle) * aspectRatio;
+    vertices[(i + 1) * 2 + 1] = sinf(angle);
   }
 
   // Upload vertices to GPU
@@ -190,8 +202,21 @@ void drawCircle(Circle circle) {
   GLint scaleLoc = glGetUniformLocation(shaderProgram, "scale");
   GLint colorLoc = glGetUniformLocation(shaderProgram, "color");
 
+  // Properly scale the circle while maintaining aspect ratio
+  float xScale = circle.radius;
+  float yScale = circle.radius;
+
+  // If wider than tall, reduce x-scale to maintain circle shape
+  if (aspectRatio > 1.0f) {
+    xScale = circle.radius / aspectRatio;
+  }
+  // If taller than wide, reduce y-scale to maintain circle shape
+  else if (aspectRatio < 1.0f) {
+    yScale = circle.radius * aspectRatio;
+  }
+
   glUniform2f(offsetLoc, circle.x, circle.y);
-  glUniform2f(scaleLoc, circle.radius, circle.radius);
+  glUniform2f(scaleLoc, xScale, yScale);
   glUniform4f(colorLoc, circle.r, circle.g, circle.b, circle.a);
 
   // Draw circle as a triangle fan
@@ -202,9 +227,14 @@ void drawCircle(Circle circle) {
   glBindVertexArray(0);
   glUseProgram(0);
 }
+void renderTextLeft(const char *text, float x, float y, float scale, float r,
+                    float g, float b, float a) {
+  // Apply window scaling to make text responsive
+  // This adjusts the scale factor based on current window dimensions
+  float baseWidth = baseWindowWidth;
+  float scaleRatio = windowWidth / baseWidth;
+  float responsiveScale = scale * scaleRatio;
 
-void renderText(const char *text, float x, float y, float scale, float r,
-                float g, float b, float a) {
   // Activate shader and set text color
   glUseProgram(textShaderProgram);
   glUniform4f(glGetUniformLocation(textShaderProgram, "textColor"), r, g, b, a);
@@ -254,21 +284,21 @@ void renderText(const char *text, float x, float y, float scale, float r,
 
   for (const char *c = text; *c; c++) {
     Character ch = characters[(unsigned char)*c];
-
     if (ch.textureID == 0)
       continue; // Skip if glyph wasn't loaded
 
     // Calculate character position and size
-    float xpos_with_bearing = xpos + ch.bearingX * scale;
-    float ypos_with_bearing = ypos - (ch.height - ch.bearingY) * scale;
-
-    float w = ch.width * scale;
-    float h = ch.height * scale;
+    // Use responsiveScale instead of scale
+    float xpos_with_bearing = xpos + ch.bearingX * responsiveScale;
+    float ypos_with_bearing =
+        ypos - (ch.height - ch.bearingY) * responsiveScale;
+    float w = ch.width * responsiveScale;
+    float h = ch.height * responsiveScale;
 
     // Skip rendering if character has no width or height
     if (w <= 0 || h <= 0) {
       // Advance cursor for space characters and other non-visible glyphs
-      xpos += (ch.advance >> 6) * scale;
+      xpos += (ch.advance >> 6) * responsiveScale;
       continue;
     }
 
@@ -277,7 +307,6 @@ void renderText(const char *text, float x, float y, float scale, float r,
         {xpos_with_bearing, ypos_with_bearing + h, 0.0f, 0.0f},
         {xpos_with_bearing, ypos_with_bearing, 0.0f, 1.0f},
         {xpos_with_bearing + w, ypos_with_bearing, 1.0f, 1.0f},
-
         {xpos_with_bearing, ypos_with_bearing + h, 0.0f, 0.0f},
         {xpos_with_bearing + w, ypos_with_bearing, 1.0f, 1.0f},
         {xpos_with_bearing + w, ypos_with_bearing + h, 1.0f, 0.0f}};
@@ -294,7 +323,8 @@ void renderText(const char *text, float x, float y, float scale, float r,
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // Advance cursor for next glyph
-    xpos += (ch.advance >> 6) * scale; // Bitshift by 6 to get value in pixels
+    // Use responsiveScale for advancing too
+    xpos += (ch.advance >> 6) * responsiveScale;
   }
 
   // Restore previous blend state
@@ -309,6 +339,30 @@ void renderText(const char *text, float x, float y, float scale, float r,
   glUseProgram(0);
 }
 
+void renderTextCenter(const char *text, float x, float y, float scale, float r,
+                      float g, float b, float a) {
+  // Calculate the total width of the text
+  float totalWidth = 0.0f;
+  float totalHeight = 0.0f;
+
+  // Apply window scaling to make text responsive
+  float baseWidth = baseWindowWidth;
+  float scaleRatio = windowWidth / baseWidth;
+  float responsiveScale = scale * scaleRatio;
+
+  // Measure the width of the entire text
+  for (const char *c = text; *c; c++) {
+    Character ch = characters[(unsigned char)*c];
+    totalWidth += (ch.advance >> 6) * responsiveScale;
+    if (totalHeight < ch.height * responsiveScale)
+      totalHeight = ch.height * responsiveScale;
+  }
+
+  float offsetX = -(totalWidth) / windowWidth;
+  float offsetY = -(totalHeight) / windowHeight;
+
+  renderTextLeft(text, x + offsetX, y + offsetY, scale, r, g, b, a);
+}
 void debugTextRendering() {
   printf("Window dimensions: %d x %d\n", windowWidth, windowHeight);
 
@@ -338,7 +392,7 @@ void debugTextRendering() {
 int initTextRenderer(const char *fontPath, int fontSize) {
   // Create shader program specifically for text rendering
   const char *textVertexShaderSrc =
-      "#version 330 core\n"
+      "#version 450 core\n"
       "layout (location = 0) in vec4 vertex;\n" // <vec2 pos, vec2 tex>
       "out vec2 TexCoords;\n"
       "uniform mat4 projection;\n"
@@ -348,7 +402,7 @@ int initTextRenderer(const char *fontPath, int fontSize) {
       "}\n";
 
   const char *textFragmentShaderSrc =
-      "#version 330 core\n"
+      "#version 450 core\n"
       "in vec2 TexCoords;\n"
       "out vec4 FragColor;\n"
       "uniform sampler2D text;\n"
