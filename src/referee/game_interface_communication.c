@@ -1,4 +1,4 @@
-#include "../../include/game_interface_communication.h"
+#include "game_interface_communication.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdio.h>
@@ -47,8 +47,7 @@ int create_graphics_process(
   if (graphicsCommunicationInfo->pid < 0) {
     perror("fork failed");
     return FORK_ERROR;
-  } 
-  else if (graphicsCommunicationInfo->pid == 0) { // Child process
+  } else if (graphicsCommunicationInfo->pid == 0) { // Child process
     // Close unused pipe ends
     close(graphicsCommunicationInfo->read_write_fd[1]); // graphics won't write
     // exec the graphics process here
@@ -69,8 +68,7 @@ int create_graphics_pipe(GraphicsCommunicationInfo *graphicsCommunicationInfo) {
   return 0;
 }
 
-int update_screen(GameState *game_state,
-                  int simulation_winning_method,
+int update_screen(GameState *game_state, int simulation_winning_method,
                   int simulation_winner,
                   GraphicsCommunicationInfo *graphicsCommunicationInfo,
                   Display *display) {
@@ -80,8 +78,7 @@ int update_screen(GameState *game_state,
   display->in_simulation = game_state->in_simulation;
   display->current_simulation_time =
       game_state->current_simulation_time / 1000; // Convert to seconds
-  display->max_simulation_time =
-      game_state->max_simulation_time; // seconds
+  display->max_simulation_time = game_state->max_simulation_time; // seconds
   display->current_round_time =
       game_state->current_round_time / 1000; // Convert to seconds
   display->number_of_rounds_played = game_state->number_of_rounds_played;
@@ -98,7 +95,6 @@ int update_screen(GameState *game_state,
   display->simulation_winning_method = simulation_winning_method;
   display->simulation_winner = simulation_winner;
   display->score_gap_to_win = game_state->score_gap_to_win;
-  
 
   // Here you would typically send this data to the display process
   send_data_to_display(display, graphicsCommunicationInfo);
@@ -198,28 +194,25 @@ ssize_t write_all(int fd, const void *buffer, size_t count) {
   return bytes_written;
 }
 
-int destroy_graphics_process(GraphicsCommunicationInfo *graphicsCommunicationInfo) 
-{
+int destroy_graphics_process(
+    GraphicsCommunicationInfo *graphicsCommunicationInfo) {
   // add signal handler to kill all players
-  
+
   int status;
-  if (waitpid(graphicsCommunicationInfo->pid, &status, WNOHANG) == -1)
-  {
+  if (waitpid(graphicsCommunicationInfo->pid, &status, WNOHANG) == -1) {
     perror("Error waiting for Graphics to pause and terminate");
-    return WAIT_ERROR; 
+    return WAIT_ERROR;
   }
 
-  if (WIFSTOPPED(status))
-  { // The child is paused
-    if (kill(graphicsCommunicationInfo->pid, SIGTERM) == -1)
-    {
+  if (WIFSTOPPED(status)) { // The child is paused
+    if (kill(graphicsCommunicationInfo->pid, SIGTERM) == -1) {
       perror("Failed to Graphics player");
       return SIGNAL_ERROR;
     }
   }
-  
+
   close(graphicsCommunicationInfo->read_write_fd[0]);
   close(graphicsCommunicationInfo->read_write_fd[1]);
-  
+
   return 0;
 }

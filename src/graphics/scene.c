@@ -15,36 +15,35 @@
 // Enviroment Colors
 #define COLOR_SKY_BLUE 0.2f, 0.15f, 0.3f, 1.0f
 #define COLOR_GRASS_GREEN 0.20f, 0.45f, 0.15f, 1.0f
-// 0.8f, 0.75f, 0.95f, 1.0f
 #define COLOR_SUN_YELLOW 0.95f, 0.85f, 0.05f, 1.0f
 #define COLOR_SUNSKY_BLEND 0.6f, 0.525f, 0.25f, 1.0f
 #define COLOR_CLOUD_WHITE 0.95f, 0.95f, 1.0f, 1.0f
 #define COLOR_TREE_BROWN 0.4f, 0.25f, 0.1f, 1.0f
 #define COLOR_TREE_GREEN 0.1f, 0.6f, 0.2f, 1.0f
+#define COLOR_TREE_GROUND 0.36f, 0.25f, 0.20f, 1.0f
 // Rope Color
 #define COLOR_LIGHT_BROWN 0.8f, 0.6f, 0.4f, 1.0f
 // Rope mark Color
 #define COLOR_RED 1.0f, 0.0f, 0.0f, 1.0f
 
+static char buf[64];
 void drawDashboard(const Display *display) {
-  char buffer[128];
-
-  snprintf(buffer, sizeof(buffer), "Time: %lds / %lds",
+  snprintf(buf, sizeof(buf), "Time: %lds / %lds",
            display->current_simulation_time, display->max_simulation_time);
-  renderTextLeft(buffer, -0.95f, 0.90f, 0.5f, 1, 1, 1, 1);
+  renderTextLeft(buf, -0.95f, 0.90f, 0.5f, 1, 1, 1, 1);
 
-  snprintf(buffer, sizeof(buffer), "Score: %d - %d",
-           display->simulation_score.first, display->simulation_score.second);
-  renderTextCenter(buffer, 0, 0.85f, 1.0f, 1, 1, 1, 1);
+  snprintf(buf, sizeof(buf), "Score: %d - %d", display->simulation_score.first,
+           display->simulation_score.second);
+  renderTextCenter(buf, 0, 0.85f, 1.0f, 1, 1, 1, 1);
 
-  snprintf(buffer, sizeof(buffer), "Round: %d / %d",
-           display->number_of_rounds_played, display->max_number_of_rounds);
-  renderTextLeft(buffer, -0.95f, 0.84f, 0.5f, 1, 1, 1, 1);
+  snprintf(buf, sizeof(buf), "Round: %d / %d", display->number_of_rounds_played,
+           display->max_number_of_rounds);
+  renderTextLeft(buf, -0.95f, 0.84f, 0.5f, 1, 1, 1, 1);
 
-  snprintf(buffer, sizeof(buffer), "Winstreak: %d/%d by team %d",
+  snprintf(buf, sizeof(buf), "Winstreak: %d/%d by team %d",
            display->current_win_streak, display->max_consecutive_wins,
            display->previous_round_result);
-  renderTextLeft(buffer, -0.95f, 0.78f, 0.5f, 1, 1, 1, 1);
+  renderTextLeft(buf, -0.95f, 0.78f, 0.5f, 1, 1, 1, 1);
 }
 
 void drawPlayer(float x, float y, Player *player, float r, float g, float b,
@@ -59,7 +58,6 @@ void drawPlayer(float x, float y, Player *player, float r, float g, float b,
   drawCircle(playerCircle);
 
   // Render the player number
-  char buf[64];
   snprintf(buf, sizeof(buf), "%d", player->pid);
 
   renderTextCenter(buf, x, y + PLAYER_RADIUS + 0.02f, 0.3f, 1.0f, 1.0f, 1.0f,
@@ -102,7 +100,6 @@ void drawTeam(const Team team, float direction) {
 }
 
 void DrawTeamTotals(const Display *display) {
-  char buf[64];
   // Team 1 sum
   snprintf(buf, sizeof(buf), "%d", display->team1_sum);
   renderTextCenter(buf, -0.75f, -0.36f, 1.0f, COLOR_EMERALD_GREEN);
@@ -117,16 +114,19 @@ void DrawTeamTotals(const Display *display) {
   else
     renderTextCenter(buf, 0.0f, -0.36f, 1.0f, COLOR_ROYAL_BLUE);
 }
-void drawTree(float x, float baseY) {
+void drawTree(float x, float y) {
+  // Ground
+  drawCircle((Circle){x, y - 0.3f, 0.12f, COLOR_TREE_GROUND, 32});
+
   // Trunk
-  Rectangle trunk = {x, baseY - 0.15f, 0.05f, 0.3f, COLOR_TREE_BROWN};
+  Rectangle trunk = {x, y - 0.15f, 0.05f, 0.3f, COLOR_TREE_BROWN};
   drawRectangle(trunk);
 
   // Leaves (fluffy green circles)
-  drawCircle((Circle){x, baseY + 0.15f, 0.2f, COLOR_TREE_GREEN, 32});
-  drawCircle((Circle){x - 0.07f, baseY + 0.12f, 0.15f, COLOR_TREE_GREEN, 32});
-  drawCircle((Circle){x + 0.07f, baseY + 0.12f, 0.15f, COLOR_TREE_GREEN, 32});
-  drawCircle((Circle){x, baseY + 0.22f, 0.07f, COLOR_TREE_GREEN, 32});
+  drawCircle((Circle){x, y + 0.15f, 0.2f, COLOR_TREE_GREEN, 32});
+  drawCircle((Circle){x - 0.07f, y + 0.12f, 0.15f, COLOR_TREE_GREEN, 32});
+  drawCircle((Circle){x + 0.07f, y + 0.12f, 0.15f, COLOR_TREE_GREEN, 32});
+  drawCircle((Circle){x, y + 0.22f, 0.07f, COLOR_TREE_GREEN, 32});
 }
 
 void drawCloud(float x, float y) {
@@ -181,7 +181,6 @@ void drawRope(int score, int max_score) {
 }
 
 void drawRoundFinishMessage(const Display *display) {
-  char buf[64];
   if (!display->in_round && display->in_simulation) {
     if (display->previous_round_result == TEAM1_TEAM2_DRAW)
       snprintf(buf, sizeof(buf), "Draw");
@@ -189,7 +188,7 @@ void drawRoundFinishMessage(const Display *display) {
       snprintf(buf, sizeof(buf), "Team %d won the round",
                display->previous_round_result);
 
-    renderTextCenter(buf, 0.0f, 0.2f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderTextCenter(buf, 0.0f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
   }
 
   if (!display->in_simulation) {

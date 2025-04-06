@@ -1,7 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #define _XOPEN_SOURCE 500
-#include "../../include/game_state.h"
-#include "../../include/player.h"
+#include "game_state.h"
+#include "player.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>

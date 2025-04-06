@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   int windowWidth = 1280;
   int windowHeight = 720;
   GLFWwindow *window =
-      glfwCreateWindow(windowWidth, windowHeight, "Renderer Demo", NULL, NULL);
+      glfwCreateWindow(windowWidth, windowHeight, "Tug Of War", NULL, NULL);
   if (!window) {
     printf("Failed to create GLFW window\n");
     glfwTerminate();

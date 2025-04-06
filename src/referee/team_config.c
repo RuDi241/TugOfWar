@@ -1,6 +1,6 @@
-#include "../../include/team_config.h"
-#include "../../include/error_codes.h"
-#include "../../include/pair_int_int.h"
+#include "team_config.h"
+#include "error_codes.h"
+#include "pair_int_int.h"
 #include <stdio.h>
 #include <stdlib.h>
 

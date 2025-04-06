@@ -1,5 +1,5 @@
-#include "../../include/game_config.h"
-#include "../../include/error_codes.h"
+#include "game_config.h"
+#include "error_codes.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -23,9 +23,8 @@ int parse_game_config(char *buf, GameConfig *game_config) {
     return 0;
   }
 
-
   if (sscanf(buf, " max_number_of_rounds = %d",
-            &game_config->max_number_of_rounds) == 1) {
+             &game_config->max_number_of_rounds) == 1) {
     if (game_config->max_number_of_rounds <= 0) {
       fprintf(stderr, "max_number_of_rounds must be positive.\n");
       return CONFIG_ERROR;
@@ -33,8 +32,8 @@ int parse_game_config(char *buf, GameConfig *game_config) {
     return 0;
   }
 
-  if (sscanf(buf, " score_gap_to_win = %d",
-            &game_config->score_gap_to_win) == 1) {
+  if (sscanf(buf, " score_gap_to_win = %d", &game_config->score_gap_to_win) ==
+      1) {
     if (game_config->score_gap_to_win <= 0) {
       fprintf(stderr, "score_gap_to_win must be positive.\n");
       return CONFIG_ERROR;
@@ -43,7 +42,7 @@ int parse_game_config(char *buf, GameConfig *game_config) {
   }
 
   if (sscanf(buf, " max_consecutive_wins = %d",
-            &game_config->max_consecutive_wins) == 1) {
+             &game_config->max_consecutive_wins) == 1) {
     if (game_config->max_consecutive_wins <= 0) {
       fprintf(stderr, "max_consecutive_wins must be positive.\n");
       return CONFIG_ERROR;
@@ -55,12 +54,10 @@ int parse_game_config(char *buf, GameConfig *game_config) {
   return CONFIG_ERROR;
 }
 
-const GameConfig DEFAULT_CONFIG = {
-    .max_simulation_time = 100,
-    .max_number_of_rounds = 10,
-    .score_gap_to_win = 6000,
-    .max_consecutive_wins = 5
-};
+const GameConfig DEFAULT_CONFIG = {.max_simulation_time = 100,
+                                   .max_number_of_rounds = 10,
+                                   .score_gap_to_win = 6000,
+                                   .max_consecutive_wins = 5};
 
 int fprintf_game_config(FILE *stream, const GameConfig *game_config) {
   if (stream == NULL)
@@ -69,8 +66,7 @@ int fprintf_game_config(FILE *stream, const GameConfig *game_config) {
           game_config->max_simulation_time);
   fprintf(stream, "max_number_of_rounds = %d\n",
           game_config->max_number_of_rounds);
-  fprintf(stream, "score_gap_to_win = %d\n",
-          game_config->score_gap_to_win);
+  fprintf(stream, "score_gap_to_win = %d\n", game_config->score_gap_to_win);
   fprintf(stream, "max_consecutive_wins = %d\n",
           game_config->max_consecutive_wins);
   fflush(stream);

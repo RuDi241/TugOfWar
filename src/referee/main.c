@@ -1,10 +1,10 @@
-#include "../../include/error_codes.h"
-#include "../../include/game_config.h"
-#include "../../include/team_config.h"
-#include "../../include/team.h"
-#include "../../include/game_state.h"
-#include "../../include/player.h"
-#include "../../include/game_interface_communication.h"
+#include "error_codes.h"
+#include "game_config.h"
+#include "team_config.h"
+#include "team.h"
+#include "game_state.h"
+#include "player.h"
+#include "game_interface_communication.h"
 #include <sys/time.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -82,7 +82,8 @@ int main(int argc, char *argv[]) {
     time_t max_round_time_ms = game_state.max_simulation_time * 1000LL;
     time_t round_time_at_last_measure = 0;
 
-    while (game_state.current_round_time <= max_round_time_ms && game_state.current_simulation_time <= max_simulation_time_ms) {
+    while (game_state.current_round_time <= max_round_time_ms &&
+           game_state.current_simulation_time <= max_simulation_time_ms) {
 
       if (gettimeofday(&now, NULL) == -1) {
         perror("gettimeofday failed");
@@ -96,7 +97,7 @@ int main(int argc, char *argv[]) {
       game_state.current_simulation_time =
           (now.tv_sec - game_state.start_simulation_time.tv_sec) * 1000 +
           (now.tv_usec - game_state.start_simulation_time.tv_usec) / 1000;
-      
+
       if (game_state.current_round_time - round_time_at_last_measure >= 1000) {
         round_time_at_last_measure = game_state.current_round_time;
 
@@ -108,7 +109,7 @@ int main(int argc, char *argv[]) {
         }
 
         for (int i = 0; i < game_state.team2.size; i++) {
-          if(kill(game_state.team2.players[i].pid, SIGUSR2) == -1) {
+          if (kill(game_state.team2.players[i].pid, SIGUSR2) == -1) {
             perror("Error sending SIGUSR2 to team 2 player");
             return SIGNAL_ERROR;
           }
