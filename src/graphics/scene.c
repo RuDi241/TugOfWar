@@ -7,15 +7,18 @@
 // Constants
 #define PLAYER_RADIUS 0.1f
 #define PLAYER_SPACING 0.1f
-#define ROPE_THICKNESS 0.02f
+#define ROPE_THICKNESS 0.03f
 #define ROPE_MARK_WIDTH 0.05f
 // Team Colors
 #define COLOR_ROYAL_BLUE 0.2f, 0.4f, 0.8f, 1.0f
 #define COLOR_EMERALD_GREEN 0.8f, 0.4f, 0.4f, 1.0f
 // Enviroment Colors
 #define COLOR_DARK_GREY 0.2f, 0.2f, 0.25f, 1.0f
-#define COLOR_SKY_BLUE 0.5f, 0.75f, 0.95f, 1.0f
-#define COLOR_SUN_YELLOW 1.0f, 0.9f, 0.2f, 1.0f
+#define COLOR_SKY_BLUE 0.2f, 0.15f, 0.3f, 1.0f
+#define COLOR_GRASS_GREEN 0.25f, 0.59f, 0.04f, 1.0f
+// 0.8f, 0.75f, 0.95f, 1.0f
+#define COLOR_SUN_YELLOW 0.95f, 0.85f, 0.05f, 1.0f
+#define COLOR_SUNSKY_BLEND 0.6f, 0.525f, 0.25f, 1.0f
 #define COLOR_CLOUD_WHITE 0.95f, 0.95f, 1.0f, 1.0f
 #define COLOR_TREE_BROWN 0.4f, 0.25f, 0.1f, 1.0f
 #define COLOR_TREE_GREEN 0.1f, 0.6f, 0.2f, 1.0f
@@ -27,22 +30,22 @@
 void drawDashboard(const Display *display) {
   char buffer[128];
 
-  snprintf(buffer, sizeof(buffer), "Score: %d - %d",
-           display->simulation_score.first, display->simulation_score.second);
-  renderTextCenter(buffer, 0, 0.85f, 1.0f, 1, 1, 1, 1);
-
   snprintf(buffer, sizeof(buffer), "Time: %lds / %lds",
            display->current_simulation_time, display->max_simulation_time);
   renderTextLeft(buffer, -0.95f, 0.90f, 0.5f, 1, 1, 1, 1);
 
+  snprintf(buffer, sizeof(buffer), "Score: %d - %d",
+           display->simulation_score.first, display->simulation_score.second);
+  renderTextCenter(buffer, 0, 0.85f, 1.0f, 1, 1, 1, 1);
+
   snprintf(buffer, sizeof(buffer), "Round: %d / %d",
            display->number_of_rounds_played, display->max_number_of_rounds);
-  renderTextLeft(buffer, -0.95f, 0.8f, 0.5f, 1, 1, 1, 1);
+  renderTextLeft(buffer, -0.95f, 0.84f, 0.5f, 1, 1, 1, 1);
 
-  snprintf(buffer, sizeof(buffer), "Consecutive Rounds Won: %d/%d by team %d",
+  snprintf(buffer, sizeof(buffer), "Winstreak: %d/%d by team %d",
            display->current_win_streak, display->max_consecutive_wins,
            display->previous_round_result);
-  renderTextLeft(buffer, -0.95f, 0.7f, 0.5f, 1, 1, 1, 1);
+  renderTextLeft(buffer, -0.95f, 0.78f, 0.5f, 1, 1, 1, 1);
 }
 
 void drawPlayer(float x, float y, Player *player, float r, float g, float b,
@@ -69,12 +72,8 @@ void drawPlayer(float x, float y, Player *player, float r, float g, float b,
 
   // Fall timeout
   if (player->fall_timeout) {
-    snprintf(buf, sizeof(buf), "Ouch, I fell!");
+    snprintf(buf, sizeof(buf), "I fell %ds", player->fall_timeout);
     renderTextCenter(buf, x, y - 0.13f, 0.3f, 1.0f, 1.0f, 1.0f, 1.0f);
-
-    snprintf(buf, sizeof(buf), "Getting up in: %ds", player->fall_timeout);
-
-    renderTextCenter(buf, x, y - 0.17f, 0.3f, 1.0f, 1.0f, 1.0f, 1.0f);
   }
 }
 
@@ -107,11 +106,11 @@ void DrawTeamTotals(const Display *display) {
   char buf[64];
   // Team 1 sum
   snprintf(buf, sizeof(buf), "%d", display->team1_sum);
-  renderTextCenter(buf, -0.75f, -0.36f, 1.0f, COLOR_ROYAL_BLUE);
+  renderTextCenter(buf, -0.75f, -0.36f, 1.0f, COLOR_EMERALD_GREEN);
 
   // Team 2 sum
   snprintf(buf, sizeof(buf), "%d", display->team2_sum);
-  renderTextCenter(buf, 0.75f, -0.36f, 1.0f, COLOR_EMERALD_GREEN);
+  renderTextCenter(buf, 0.75f, -0.36f, 1.0f, COLOR_ROYAL_BLUE);
 }
 void drawTree(float x, float baseY) {
   // Trunk
@@ -132,7 +131,10 @@ void drawCloud(float x, float y) {
 }
 
 void drawSun() {
-  Circle sun = {0.0f, 0.7f, 0.2f, COLOR_SUN_YELLOW, 64};
+  Circle sunHalo = {0.0f, 0.0f, 0.9f, COLOR_SUNSKY_BLEND, 64};
+  drawCircle(sunHalo);
+
+  Circle sun = {0.0f, 0.0f, 0.7f, COLOR_SUN_YELLOW, 64};
   drawCircle(sun);
 }
 
@@ -145,8 +147,8 @@ void drawEnvironment() {
   Rectangle sky = {0.0f, 0.25f, 2.0f, 1.5f, COLOR_SKY_BLUE};
   drawRectangle(sky);
 
-  drawGround();
   drawSun();
+  drawGround();
 
   drawCloud(-0.6f, 0.45f);
   drawCloud(0.5f, 0.7f);
@@ -195,12 +197,13 @@ void drawRoundFinishMessage(const Display *display) {
 
     renderTextCenter(buf, 0.0f, 0.4f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    if (display->simulation_winning_method == CONSECUTIVE_WINS)
-      snprintf(buf, sizeof(buf), "by consecutive wins rule.");
-    else if (display->simulation_winning_method == WON_MORE_ROUNDS)
-      snprintf(buf, sizeof(buf), "by consecutive winning more rounds.");
-
-    renderTextCenter(buf, 0.0f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    if (display->simulation_winner != SIM_RES_DRAW) {
+      if (display->simulation_winning_method == CONSECUTIVE_WINS)
+        snprintf(buf, sizeof(buf), "by consecutive wins rule.");
+      else if (display->simulation_winning_method == WON_MORE_ROUNDS)
+        snprintf(buf, sizeof(buf), "by winning more rounds.");
+      renderTextCenter(buf, 0.0f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    }
   }
 }
 
