@@ -1,93 +1,194 @@
 #include "../../include/game_interface_communication.h"
 #include <unistd.h>
 
+ssize_t read_all(int fd, void *buffer, size_t count) {
+  size_t bytes_read = 0;
+  char *buf = (char *)buffer;
+  while (bytes_read < count) {
+    ssize_t result = read(fd, buf + bytes_read, count - bytes_read);
+    if (result < 0) {
+      return -1; // Error occurred
+    }
+    if (result == 0) {
+      return bytes_read; // EOF reached before reading all requested bytes
+    }
+    bytes_read += result;
+  }
+  return bytes_read;
+}
+
 void receive_data_from_referee(int fd, Display *disp) {
-  if (read_all(fd, &disp->in_round, sizeof(disp->in_round)) == -1)
-    goto error;
-  if (read_all(fd, &disp->in_simulation, sizeof(disp->in_simulation)) == -1)
-    goto error;
+  // Read all fields from the pipe in the same order they were written
+
+  if (read_all(fd, &disp->in_round, sizeof(disp->in_round)) < 0) {
+    perror("Error reading in_round");
+    return;
+  }
+  disp->in_round = disp->in_round - '0';
+
+  if (read_all(fd, &disp->in_simulation, sizeof(disp->in_simulation)) < 0) {
+    perror("Error reading in_simulation");
+    return;
+  }
+
+  disp->in_simulation = disp->in_simulation - '0';
   if (read_all(fd, &disp->current_simulation_time,
-               sizeof(disp->current_simulation_time)) == -1)
-    goto error;
+               sizeof(disp->current_simulation_time)) < 0) {
+    perror("Error reading current_simulation_time");
+    return;
+  }
+
   if (read_all(fd, &disp->max_simulation_time,
-               sizeof(disp->max_simulation_time)) == -1)
-    goto error;
+               sizeof(disp->max_simulation_time)) < 0) {
+    perror("Error reading max_simulation_time");
+    return;
+  }
+
   if (read_all(fd, &disp->current_round_time,
-               sizeof(disp->current_round_time)) == -1)
-    goto error;
+               sizeof(disp->current_round_time)) < 0) {
+    perror("Error reading current_round_time");
+    return;
+  }
+
   if (read_all(fd, &disp->number_of_rounds_played,
-               sizeof(disp->number_of_rounds_played)) == -1)
-    goto error;
+               sizeof(disp->number_of_rounds_played)) < 0) {
+    perror("Error reading number_of_rounds_played");
+    return;
+  }
+
   if (read_all(fd, &disp->max_number_of_rounds,
-               sizeof(disp->max_number_of_rounds)) == -1)
-    goto error;
-  if (read_all(fd, &disp->round_score, sizeof(disp->round_score)) == -1)
-    goto error;
-  if (read_all(fd, &disp->simulation_score, sizeof(disp->simulation_score)) ==
-      -1)
-    goto error;
-
-  // Receive team1
-  if (read_all(fd, &disp->team1.size, sizeof(disp->team1.size)) == -1)
-    goto error;
-  if (disp->team1.size > 0) {
-    if (!disp->team1.players)
-      disp->team1.players = malloc(disp->team1.size * sizeof(Player));
-    if (!disp->team1.players) {
-      perror("malloc team1.players");
-      goto error;
-    }
-    for (int i = 0; i < disp->team1.size; i++) {
-      if (read_all(fd, &disp->team1.players[i], sizeof(Player)) == -1)
-        goto error;
-    }
-  } else {
-    disp->team1.players = NULL;
+               sizeof(disp->max_number_of_rounds)) < 0) {
+    perror("Error reading max_number_of_rounds");
+    return;
   }
 
-  // Receive team2
-  if (read_all(fd, &disp->team2.size, sizeof(disp->team2.size)) == -1)
-    goto error;
-  if (disp->team2.size > 0) {
-    if (!disp->team2.players)
-      disp->team2.players = malloc(disp->team2.size * sizeof(Player));
-    if (!disp->team2.players) {
-      perror("malloc team2.players");
-      goto error;
-    }
-    for (int i = 0; i < disp->team2.size; i++) {
-      if (read_all(fd, &disp->team2.players[i], sizeof(Player)) == -1)
-        goto error;
-    }
-  } else {
-    disp->team2.players = NULL;
+  if (read_all(fd, &disp->round_score, sizeof(disp->round_score)) < 0) {
+    perror("Error reading round_score");
+    return;
   }
 
-  if (read_all(fd, &disp->team1_sum, sizeof(disp->team1_sum)) == -1)
-    goto error;
-  if (read_all(fd, &disp->team2_sum, sizeof(disp->team2_sum)) == -1)
-    goto error;
+  if (read_all(fd, &disp->simulation_score, sizeof(disp->simulation_score)) <
+      0) {
+    perror("Error reading simulation_score");
+    return;
+  }
+
+  // Read team1 data
+  int team1_size;
+  if (read_all(fd, &team1_size, sizeof(team1_size)) < 0) {
+    perror("Error reading team1 size");
+    return;
+  }
+
+  // Allocate memory for team1 players if needed
+  if (disp->team1.players == NULL) {
+    disp->team1.players = (Player *)malloc(team1_size * sizeof(Player));
+    if (disp->team1.players == NULL) {
+      perror("Failed to allocate memory for team1 players");
+      return;
+    }
+  } else if (disp->team1.size != team1_size) {
+    // Reallocate if the team size has changed
+    Player *new_players =
+        (Player *)realloc(disp->team1.players, team1_size * sizeof(Player));
+    if (new_players == NULL) {
+      perror("Failed to reallocate memory for team1 players");
+      return;
+    }
+    disp->team1.players = new_players;
+  }
+
+  disp->team1.size = team1_size;
+  for (int i = 0; i < team1_size; i++) {
+    if (read_all(fd, &disp->team1.players[i], sizeof(Player)) < 0) {
+      perror("Error reading team1 player");
+      return;
+    }
+  }
+
+  // Read team2 data
+  int team2_size;
+  if (read_all(fd, &team2_size, sizeof(team2_size)) < 0) {
+    perror("Error reading team2 size");
+    return;
+  }
+
+  // Allocate memory for team2 players if needed
+  if (disp->team2.players == NULL) {
+    disp->team2.players = (Player *)malloc(team2_size * sizeof(Player));
+    if (disp->team2.players == NULL) {
+      perror("Failed to allocate memory for team2 players");
+      return;
+    }
+  } else if (disp->team2.size != team2_size) {
+    // Reallocate if the team size has changed
+    Player *new_players =
+        (Player *)realloc(disp->team2.players, team2_size * sizeof(Player));
+    if (new_players == NULL) {
+      perror("Failed to reallocate memory for team2 players");
+      return;
+    }
+    disp->team2.players = new_players;
+  }
+
+  disp->team2.size = team2_size;
+  for (int i = 0; i < team2_size; i++) {
+    if (read_all(fd, &disp->team2.players[i], sizeof(Player)) < 0) {
+      perror("Error reading team2 player");
+      return;
+    }
+  }
+
+  if (read_all(fd, &disp->team1_sum, sizeof(disp->team1_sum)) < 0) {
+    perror("Error reading team1_sum");
+    return;
+  }
+
+  if (read_all(fd, &disp->team2_sum, sizeof(disp->team2_sum)) < 0) {
+    perror("Error reading team2_sum");
+    return;
+  }
+
   if (read_all(fd, &disp->max_consecutive_wins,
-               sizeof(disp->max_consecutive_wins)) == -1)
-    goto error;
-  if (read_all(fd, &disp->previous_round_result,
-               sizeof(disp->previous_round_result)) == -1)
-    goto error;
-  if (read_all(fd, &disp->current_win_streak,
-               sizeof(disp->current_win_streak)) == -1)
-    goto error;
-  if (read_all(fd, &disp->simulation_winning_method,
-               sizeof(disp->simulation_winning_method)) == -1)
-    goto error;
-  if (read_all(fd, &disp->simulation_winner, sizeof(disp->simulation_winner)) ==
-      -1)
-    goto error;
-  if (read_all(fd, &disp->score_gap_to_win, sizeof(disp->score_gap_to_win)) ==
-      -1)
-    goto error;
+               sizeof(disp->max_consecutive_wins)) < 0) {
+    perror("Error reading max_consecutive_wins");
+    return;
+  }
 
-  printf("disp->in_round: %c\n", disp->in_round);
-  printf("disp->in_simulation: %c\n", disp->in_simulation);
+  if (read_all(fd, &disp->previous_round_result,
+               sizeof(disp->previous_round_result)) < 0) {
+    perror("Error reading previous_round_result");
+    return;
+  }
+
+  if (read_all(fd, &disp->current_win_streak,
+               sizeof(disp->current_win_streak)) < 0) {
+    perror("Error reading current_win_streak");
+    return;
+  }
+
+  if (read_all(fd, &disp->simulation_winning_method,
+               sizeof(disp->simulation_winning_method)) < 0) {
+    perror("Error reading simulation_winning_method");
+    return;
+  }
+
+  if (read_all(fd, &disp->simulation_winner, sizeof(disp->simulation_winner)) <
+      0) {
+    perror("Error reading simulation_winner");
+    return;
+  }
+
+  if (read_all(fd, &disp->score_gap_to_win, sizeof(disp->score_gap_to_win)) <
+      0) {
+    perror("Error reading score_gap_to_win");
+    return;
+  }
+}
+void printf_display(Display *disp) {
+
+  printf("disp->in_round: %d\n", disp->in_round);
+  printf("disp->in_simulation: %d\n", disp->in_simulation);
   printf("disp->current_simulation_time: %ld\n", disp->current_simulation_time);
   printf("disp->max_simulation_time: %ld\n", disp->max_simulation_time);
   printf("disp->current_round_time: %ld\n", disp->current_round_time);
@@ -117,30 +218,6 @@ void receive_data_from_referee(int fd, Display *disp) {
          disp->simulation_winning_method);
   printf("disp->simulation_winner: %d\n", disp->simulation_winner);
   printf("disp->score_gap_to_win: %d\n", disp->score_gap_to_win);
-
-error:
-  perror("receive_data_from_referee: read error");
-  // Cleanup allocated memory if any.
-  if (disp->team1.players)
-    free(disp->team1.players);
-  if (disp->team2.players)
-    free(disp->team2.players);
-}
-
-ssize_t read_all(int fd, void *buffer, size_t count) {
-  size_t bytes_read = 0;
-  char *buf = (char *)buffer;
-  while (bytes_read < count) {
-    ssize_t result = read(fd, buf + bytes_read, count - bytes_read);
-    if (result < 0) {
-      perror("Error reading from pipe");
-      return -1;
-    }
-    if (result == 0)
-      break; // EOF
-    bytes_read += result;
-  }
-  return bytes_read;
 }
 
 void destroy_display(Display *disp) {

@@ -93,6 +93,7 @@ int main(int argc, char *argv[]) {
   // Clean up
   shutdownTextRenderer();
   shutdownRenderer();
+  destroy_display(&display);
   glfwTerminate();
 
   return 0;

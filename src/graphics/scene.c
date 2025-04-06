@@ -1,7 +1,9 @@
 #include "scene.h"
+#include "game_state.h"
 #include "renderer.h"
 #include <stdio.h>
 #include <player.h>
+#include <game_interface_communication.h>
 // Constants
 #define PLAYER_RADIUS 0.1f
 #define PLAYER_SPACING 0.1f
@@ -24,7 +26,7 @@ void drawDashboard(const Display *display) {
   renderTextLeft(buffer, -0.95f, 0.8f, 0.5f, 1, 1, 1, 1);
 
   snprintf(buffer, sizeof(buffer), "Consecutive Rounds Won: %d/%d by team %d",
-           display->max_consecutive_wins, display->max_number_of_rounds,
+           display->current_win_streak, display->max_consecutive_wins,
            display->previous_round_result);
   renderTextLeft(buffer, -0.95f, 0.7f, 0.5f, 1, 1, 1, 1);
 }
@@ -61,14 +63,14 @@ void drawPlayer(float x, float y, Player *player) {
   }
 }
 
-void drawTeam(const Team *team, float direction) {
-  for (int i = 0; i < team->size; ++i) {
+void drawTeam(const Team team, float direction) {
+  for (int i = 0; i < team.size; ++i) {
     // Calculate x position for each player based on the direction and spacing
     float x = direction * (-1.0f + 0.1f + i * PLAYER_SPACING);
     float y = 0; // Vertical position stays the same for all players
 
     // Draw the player with a number
-    drawPlayer(x, y, &team->players[i]);
+    drawPlayer(x, y, &team.players[i]);
   }
 }
 
@@ -90,21 +92,42 @@ void drawRope(int score, int max_score) {
 }
 
 void drawRoundFinishMessage(const Display *display) {
-  if (!display->in_round) {
-    char buf[64];
-    snprintf(buf, sizeof(buf), "Team %d won the round",
-             display->previous_round_result + 1);
+  char buf[64];
+  if (!display->in_round && display->in_simulation) {
+    if (display->previous_round_result == TEAM1_TEAM2_DRAW)
+      snprintf(buf, sizeof(buf), "Draw");
+    else
+      snprintf(buf, sizeof(buf), "Team %d won the round",
+               display->previous_round_result);
 
     renderTextCenter(buf, 0.0f, 0.2f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+  }
+
+  if (!display->in_simulation) {
+
+    if (display->simulation_winner == SIM_RES_DRAW)
+      snprintf(buf, sizeof(buf), "Draw");
+    else
+      snprintf(buf, sizeof(buf), "Team %d won the round",
+               display->simulation_winner);
+
+    renderTextCenter(buf, 0.0f, 0.2f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    if (display->simulation_winning_method == CONSECUTIVE_WINS)
+      snprintf(buf, sizeof(buf), "by consecutive wins rule.");
+    else if (display->simulation_winning_method == WON_MORE_ROUNDS)
+      snprintf(buf, sizeof(buf), "by consecutive winning more rounds.");
+
+    renderTextCenter(buf, 0.0f, 0.4f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
   }
 }
 
 void drawScene(const Display *display) {
   drawDashboard(display);
   // Players
-  drawTeam(&display->team1, 1.0f);  // Left side
-  drawTeam(&display->team2, -1.0f); // Right side (mirror)
+  drawTeam(display->team1, 1.0f);  // Right side
+  drawTeam(display->team2, -1.0f); // Left side
   // TODO: Set max round score
-  drawRope(display->round_score, 10.0f);
+  drawRope(-display->round_score, display->score_gap_to_win);
   drawRoundFinishMessage(display);
 }

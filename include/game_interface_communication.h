@@ -67,4 +67,5 @@ ssize_t read_all(int fd, void *buffer, size_t count);
 int destroy_graphics_process(
     GraphicsCommunicationInfo *graphicsCommunicationInfo);
 
+void printf_display(Display *disp);
 #endif
