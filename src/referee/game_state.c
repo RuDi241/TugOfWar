@@ -1,5 +1,6 @@
 #include "../../include/game_state.h"
 #include "../../include/error_codes.h"
+#include "../../include/game_interface_communication.h"
 #include <stdlib.h>
 
 
@@ -26,6 +27,9 @@ int init_game_state(GameState *game_state, GameConfig *game_config, TeamConfig *
     game_state->score_gap_to_win = game_config->score_gap_to_win;
     game_state->current_win_streak = 0;
     game_state->previous_round_result = TEAM1_TEAM2_DRAW;
+
+    game_state->simulation_winning_method = STILL_PLAYING;
+    game_state->simulation_winner = SIM_RES_DRAW;
 
     make_team(&game_state->team1, team1_config);
     make_team(&game_state->team2, team2_config);
@@ -121,24 +125,36 @@ int end_simulation_protocol(GameState *game_state)
 {
     if (game_state->current_win_streak >= game_state->max_consecutive_wins)
     {
-        if (game_state->previous_round_result == TEAM1_WIN)
+        if (game_state->previous_round_result == TEAM1_WIN){
             printf("Team1 has won the match by winning %d consecutive rounds!\n", game_state->current_win_streak);
-        else
+            game_state->simulation_winner = TEAM1_WIN;
+            game_state->simulation_winning_method = CONSECUTIVE_WINS;
+        }
+        else{
             printf("Team2 has won the match by winning %d consecutive rounds!\n", game_state->current_win_streak);
+            game_state->simulation_winner = TEAM2_WIN;
+            game_state->simulation_winning_method = CONSECUTIVE_WINS;
+        }
     }
     else if (game_state->simulation_score.first > game_state->simulation_score.second)
     {
         printf("Team 1 wins the simulation with score %d - %d!\n", game_state->simulation_score.first, game_state->simulation_score.second);
+        game_state->simulation_winner = TEAM1_WIN;
+        game_state->simulation_winning_method = WON_MORE_ROUNDS;
     }
     else if (game_state->simulation_score.first < game_state->simulation_score.second)
     {
         printf("Team 2 wins the simulation with score %d - %d!\n", game_state->simulation_score.first, game_state->simulation_score.second);
+        game_state->simulation_winner = TEAM2_WIN;
+        game_state->simulation_winning_method = WON_MORE_ROUNDS;
     }
     else
     {
         printf("Simulation ended in a draw with sore %d - %d!\n", game_state->simulation_score.first, game_state->simulation_score.second);
+        game_state->simulation_winner = TEAM1_TEAM2_DRAW;
+        game_state->simulation_winning_method = WON_MORE_ROUNDS;
     }
-
+    game_state->in_simulation = '0';
     return 0;
 }
 

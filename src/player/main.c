@@ -83,10 +83,10 @@ int main(int argc, char *argv[]) {
 
 void SIGUSR1_handler(int sig_num) {
   // Blocking SIGTERM during SIGUSR1 handler
-  sigset_t mask;
-  sigemptyset(&mask);
-  sigaddset(&mask, SIGTERM);
-  sigprocmask(SIG_BLOCK, &mask, NULL); // Block SIGTERM signal
+  // sigset_t mask;
+  // sigemptyset(&mask);
+  // sigaddset(&mask, SIGTERM);
+  // sigprocmask(SIG_BLOCK, &mask, NULL); // Block SIGTERM signal
 
   if (!received_position) {
     if (read(player.to_player_fd[0], &player.position, sizeof(int)) == -1) {
@@ -117,7 +117,7 @@ void SIGUSR1_handler(int sig_num) {
     printf("Player %d is draw\n", player.pid);
   }
 
-  sigprocmask(SIG_UNBLOCK, &mask, NULL);
+  // sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
   // set falltime off to zero (all players get up for the new round)
   player.fall_timeout = 0;

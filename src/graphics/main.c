@@ -1,67 +1,35 @@
+#define _XOPEN_SOURCE 500
+#include <signal.h>
+#include "game_interface_communication.h"
 #include "renderer.h"
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include "scene.h"
 #include <stdio.h>
-#include <error_codes.h>
 
-static int pipe_descriptor;
+void SIGUSR1_handler(int signum);
+
+static int read_fd;
+static Display display;
+
 int main(int argc, char *argv[]) {
 
+  // Check if the correct number of arguments is provided
   if (argc != 2) {
-    fprintf(stderr, "The program expects one read pipe descriptor.");
-    exit(EXIT_FAILURE);
+    printf("Usage: %s <read_fd>\n", argv[0]);
+    return -1;
   }
-  pipe_descriptor = atoi(argv[1]);
 
-// sample display
-#include <time.h> // for time_t
+  read_fd = atoi(argv[1]);
+  if (read_fd < 0) {
+    printf("Invalid read_fd: %d\n", read_fd);
+    return -1;
+  }
 
-  // Dummy player arrays
-  Player team1Players[4] = {
-      {1234, 0, 100, 25, {0}, {0}},
-      {1235, 1, 80, 0, {0}, {0}},
-      {1236, 2, 90, 0, {0}, {0}},
-      {1237, 3, 90, 0, {0}, {0}},
-  };
-
-  Player team2Players[4] = {
-      {2234, 0, 95, 0, {0}, {0}},
-      {2235, 1, 85, 0, {0}, {0}},
-      {2236, 2, 100, 0, {0}, {0}},
-      {223723234, 3, 200, 0, {0}, {0}},
-  };
-
-  // Wrap in Team structs
-  Team team1 = {4, team1Players};
-  Team team2 = {4, team2Players};
-
-  // Fill Display struct
-  Display display = {.in_round = 0,
-
-                     .current_simulation_time = 30,
-                     .max_simulation_time = 90,
-
-                     .current_round_time = 10,
-
-                     .number_of_rounds_played = 2,
-                     .max_number_of_rounds = 5,
-
-                     .round_score = -3, // Rope moves slightly toward team2
-                     .simulation_score = {1, 1}, // 1:1
-
-                     .team1 = team1,
-                     .team2 = team2,
-
-                     .team1_sum = 270, // Sum of energy or position
-                     .team2_sum = 280,
-
-                     .max_consecutive_wins = 2,
-                     .previous_round_result = TEAM2_WIN,
-                     .current_win_streak = 1,
-
-                     .simulation_winning_method = CONSECUTIVE_WINS,
-                     .simulation_winner = DRAW_};
+  if (sigset(SIGUSR1, SIGUSR1_handler) == SIG_ERR) {
+    perror("signal can not set SIGUSR1");
+    exit(SIGUSR1);
+  }
 
   // Initialize GLFW
   if (!glfwInit()) {
@@ -117,7 +85,7 @@ int main(int argc, char *argv[]) {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    drawScene(&display); // <--- draw the scene here
+    drawScene(&display);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -128,4 +96,9 @@ int main(int argc, char *argv[]) {
   glfwTerminate();
 
   return 0;
+}
+
+void SIGUSR1_handler(int sig_num) {
+  receive_data_from_referee(read_fd, &display);
+  return;
 }

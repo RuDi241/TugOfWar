@@ -21,7 +21,8 @@ enum RoundTeamResult {
 
 typedef struct GameState {
   char in_round;
-  
+  char in_simulation;
+
   struct timeval start_round_time;
   time_t current_round_time;
 
@@ -44,6 +45,8 @@ typedef struct GameState {
 
   int max_consecutive_wins;
   enum PreviousRoundResult previous_round_result;
+  int simulation_winning_method;
+  int simulation_winner;
   int current_win_streak;
 
 } GameState;
