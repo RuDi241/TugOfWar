@@ -80,7 +80,7 @@ void drawRope(int score, int max_score) {
   drawRectangle(rope);
 
   // Red marker position along x, normalize score to [-0.5, 0.5]
-  float offset = (float)score / max_score;
+  float offset = (float)-score / max_score;
   if (offset > 1.0f)
     offset = 1.0f;
   if (offset < -1.0f)
@@ -108,17 +108,17 @@ void drawRoundFinishMessage(const Display *display) {
     if (display->simulation_winner == SIM_RES_DRAW)
       snprintf(buf, sizeof(buf), "Draw");
     else
-      snprintf(buf, sizeof(buf), "Team %d won the round",
+      snprintf(buf, sizeof(buf), "Team %d won the game",
                display->simulation_winner);
 
-    renderTextCenter(buf, 0.0f, 0.2f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderTextCenter(buf, 0.0f, 0.4f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
     if (display->simulation_winning_method == CONSECUTIVE_WINS)
       snprintf(buf, sizeof(buf), "by consecutive wins rule.");
     else if (display->simulation_winning_method == WON_MORE_ROUNDS)
       snprintf(buf, sizeof(buf), "by consecutive winning more rounds.");
 
-    renderTextCenter(buf, 0.0f, 0.4f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    renderTextCenter(buf, 0.0f, 0.2f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
   }
 }
 
@@ -128,6 +128,6 @@ void drawScene(const Display *display) {
   drawTeam(display->team1, 1.0f);  // Right side
   drawTeam(display->team2, -1.0f); // Left side
   // TODO: Set max round score
-  drawRope(-display->round_score, display->score_gap_to_win);
+  drawRope(display->round_score, display->score_gap_to_win);
   drawRoundFinishMessage(display);
 }
