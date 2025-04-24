@@ -1,7 +1,7 @@
 #ifndef TEAM_H
 #define TEAM_H
-#include "../include/player.h"
-#include "../include/team_config.h"
+#include "player.h"
+#include "team_config.h"
 
 typedef struct Team {
   int size;
